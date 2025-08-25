@@ -5,16 +5,22 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc -b",
-    "dev": "tsc -b && node ./dist/index.js"
+    "dev": "tsx ./src/index.ts",
+    "start": "node ./dist/index.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "jsonwebtoken": "^9.0.2",
     "ws": "^8.18.3"
   },
   "devDependencies": {
-    "@types/ws": "^8.18.1",
-    "@repo/typescript-config": "workspace:*"
+    "@repo/backend": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@repo/common": "workspace:*",
+    "@repo/db": "workspace:*",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/ws": "^8.18.1"
   }
 }

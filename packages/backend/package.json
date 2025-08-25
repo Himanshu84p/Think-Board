@@ -1,0 +1,17 @@
+{
+  "name": "@repo/backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^22.15.3"
+  },
+  "exports": {
+    "./config": "./src/config.ts"
+  }
+}
