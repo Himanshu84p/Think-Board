@@ -91,7 +91,13 @@ wss.on("connection", function (socket, request) {
           });
 
           joinedUsers.forEach((user) => {
-            user.ws.send(message);
+            user.ws.send(
+              JSON.stringify({
+                type: "chat",
+                message,
+                roomId,
+              })
+            );
           });
         } catch (error) {
           socket.send("Invalid message");

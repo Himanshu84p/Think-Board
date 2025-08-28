@@ -91,7 +91,7 @@ app.post("/signin", async (req, res) => {
   }
 });
 
-app.post("/create-room", async (req, res) => {
+app.post("/create-room", isAuthenticated, async (req, res) => {
   try {
     const data = CreateRoomSchema.safeParse(req.body);
 
@@ -127,6 +127,27 @@ app.post("/create-room", async (req, res) => {
   }
 });
 
+app.get("/chats/:roomId", isAuthenticated, async (req, res) => {
+  try {
+    const roomId = Number(req.params.roomId);
+
+    const chats = await prisma.chat.findMany({
+      where: {
+        roomId,
+      },
+      take: 45,
+      orderBy: {
+        createdAt: "asc",
+      },
+    });
+
+    return res
+      .status(200)
+      .json({ chats, message: "chats fetched successfully" });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
 app.post("/join-room", isAuthenticated, (req, res) => {});
 
 app.listen(3001, () => {
