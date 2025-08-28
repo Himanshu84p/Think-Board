@@ -2,7 +2,11 @@ import express from "express";
 import jwt from "jsonwebtoken";
 import { isAuthenticated } from "./middlewares/auth.middleware";
 import { JWT_SECRET } from "@repo/backend/config";
-import { UserLoginSchema, UserRegisterSchema } from "@repo/common/types";
+import {
+  CreateRoomSchema,
+  UserLoginSchema,
+  UserRegisterSchema,
+} from "@repo/common/types";
 import { prisma } from "@repo/db/prisma";
 import bcrypt from "bcrypt";
 
@@ -76,22 +80,54 @@ app.post("/signin", async (req, res) => {
     );
 
     if (isPasswordCorrect) {
-      const token = jwt.sign(data?.email, JWT_SECRET);
+      const token = jwt.sign({ userId: isUserExist.id }, JWT_SECRET);
 
       return res.status(200).json({ token, message: "Login success" });
+    } else {
+      return res.status(400).json({ message: "Invalid credentials" });
     }
   } else {
     return res.status(400).json({ status: 400, message: "Invalid inputs" });
   }
-
-  return res
-    .status(500)
-    .json({ status: 500, message: "Internal server error" });
 });
 
-app.post("/room", isAuthenticated, (req, res) => {
-  console.log("create room");
+app.post("/create-room", async (req, res) => {
+  try {
+    const data = CreateRoomSchema.safeParse(req.body);
+
+    if (data.error) {
+      return res.status(400).json({ message: "Invalid inputs" });
+    }
+
+    if (data.data) {
+      const isSlugExist = await prisma.room.findFirst({
+        where: {
+          slug: data.data.slug,
+        },
+      });
+
+      if (isSlugExist) {
+        return res.status(400).json({ message: "room slug already exist" });
+      }
+
+      const createdRoom = await prisma.room.create({
+        data: {
+          slug: data.data.slug,
+          adminId: data.data.adminId,
+        },
+      });
+
+      return res
+        .status(200)
+        .json({ createdRoom, message: "room created successfully" });
+    }
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
 });
+
+app.post("/join-room", isAuthenticated, (req, res) => {});
 
 app.listen(3001, () => {
   console.log("http-server is listening on the port 3001");
