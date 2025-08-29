@@ -9,10 +9,13 @@ import {
 } from "@repo/common/types";
 import { prisma } from "@repo/db/prisma";
 import bcrypt from "bcrypt";
+import cors from "cors";
 
 const app = express();
 
 app.use(express.json());
+app.use(cors());
+
 
 app.get("/", (req, res) => {
   res.send("hello there");
@@ -148,7 +151,30 @@ app.get("/chats/:roomId", isAuthenticated, async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 });
-app.post("/join-room", isAuthenticated, (req, res) => {});
+
+app.get("/roomId/:slug", async (req, res) => {
+  try {
+    const slug = req.params.slug;
+
+    if (!slug) {
+      return res
+        .status(400)
+        .json({ message: "Slug is required" });
+    }
+
+    const room = await prisma.room.findFirst({
+      where: {
+        slug
+      }
+    })
+
+    return res
+      .status(200)
+      .json({ roomId: room?.id, message: "room id fetched successfully" });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
 
 app.listen(3001, () => {
   console.log("http-server is listening on the port 3001");

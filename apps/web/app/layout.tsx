@@ -23,7 +23,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body className={`bg-gray-700 min-h-screen w-full py-4 px-10`}>
         {children}
       </body>
     </html>
