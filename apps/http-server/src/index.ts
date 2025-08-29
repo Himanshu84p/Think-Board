@@ -16,7 +16,6 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-
 app.get("/", (req, res) => {
   res.send("hello there");
 });
@@ -130,7 +129,7 @@ app.post("/create-room", isAuthenticated, async (req, res) => {
   }
 });
 
-app.get("/chats/:roomId", isAuthenticated, async (req, res) => {
+app.get("/chats/:roomId", async (req, res) => {
   try {
     const roomId = Number(req.params.roomId);
 
@@ -157,16 +156,14 @@ app.get("/roomId/:slug", async (req, res) => {
     const slug = req.params.slug;
 
     if (!slug) {
-      return res
-        .status(400)
-        .json({ message: "Slug is required" });
+      return res.status(400).json({ message: "Slug is required" });
     }
 
     const room = await prisma.room.findFirst({
       where: {
-        slug
-      }
-    })
+        slug,
+      },
+    });
 
     return res
       .status(200)
