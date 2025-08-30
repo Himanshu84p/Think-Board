@@ -14,17 +14,22 @@ interface User {
 const users: User[] = [];
 
 function CheckUser(token: string): string | null {
-  const decoded = jwt.verify(token, JWT_SECRET);
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
 
-  if (typeof decoded === "string") {
+    if (typeof decoded === "string") {
+      return null;
+    }
+
+    if (!decoded || !decoded.userId) {
+      return null;
+    }
+
+    return decoded.userId;
+  } catch (error) {
+    console.log(error);
     return null;
   }
-
-  if (!decoded || !decoded.userId) {
-    return null;
-  }
-
-  return decoded.userId;
 }
 wss.on("connection", function (socket, request) {
   const tokenStr = request.url?.split("?")[1];
