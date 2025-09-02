@@ -25,29 +25,17 @@ export async function Game(
     return;
   }
 
-  ctx.fillStyle = "black";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  // const drawHistory = await getExistingShapes(roomId);
+  // if (drawHistory) {
+  //   allShapes = [...drawHistory];
 
-  const drawHistory = await getExistingShapes(roomId);
-  if (drawHistory) {
-    allShapes = [...drawHistory];
+  //   allShapes.map((dr) => {
+  //     draw preivous shapes getting from db
+  //     ctx.strokeStyle = "white";
+  //     ctx.strokeRect(dr.startX, dr.startY, dr.height, dr.width);
+  //   });
+  // }
 
-    allShapes.map((dr) => {
-      //draw preivous shapes getting from db
-      ctx.strokeStyle = "white";
-      ctx.strokeRect(dr.startX, dr.startY, dr.height, dr.width);
-    });
-  }
-  socket.onmessage = (event) => {
-    const parsedData = JSON.parse(event.data);
-    console.log("parsed message ", parsedData);
-    if (parsedData.type === "chat") {
-      const message: Shape = JSON.parse(parsedData.message);
-      allShapes.push(message);
-
-      clearAndFillCanvas(ctx, canvas);
-    }
-  };
   canvas.addEventListener("mousedown", function (e) {
     clearAndFillCanvas(ctx, canvas);
     startX = e.clientX;
@@ -109,20 +97,4 @@ function clearAndFillCanvas(
     ctx.strokeStyle = "white";
     ctx.strokeRect(dr.startX, dr.startY, dr.height, dr.width);
   });
-}
-
-async function getExistingShapes(roomId: string): Promise<Shape[] | null> {
-  try {
-    const response = await axios.get(`${HTTP_URL}/chats/${roomId}`);
-    const chats = response.data.chats;
-
-    const parsedData = chats.map((chat: { message: string }) => {
-      return JSON.parse(chat.message);
-    });
-    console.log("chat history", parsedData);
-    return parsedData;
-  } catch (error) {
-    console.log("error in getting shapes", error);
-    return null;
-  }
 }
