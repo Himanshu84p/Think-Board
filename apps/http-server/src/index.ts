@@ -1,4 +1,4 @@
-import express from "express";
+import express, { CookieOptions } from "express";
 import jwt from "jsonwebtoken";
 import { isAuthenticated } from "./middlewares/auth.middleware";
 import { JWT_SECRET } from "@repo/backend/config";
@@ -9,12 +9,16 @@ import {
 } from "@repo/common/types";
 import { prisma } from "@repo/db/prisma";
 import bcrypt from "bcrypt";
-import cors from "cors";
+import cors, { CorsOptions } from "cors";
+import cookieParser from "cookie-parser";
+
 
 const app = express();
+const corsOptions: CorsOptions = { origin: ["http://localhost:3000"], credentials: true };
 
 app.use(express.json());
-app.use(cors());
+app.use(cors(corsOptions));
+app.use(cookieParser());
 
 app.get("/", (req, res) => {
   res.send("hello there");
@@ -23,9 +27,10 @@ app.get("/", (req, res) => {
 app.post("/signup", async (req, res) => {
   const { data, error } = UserRegisterSchema.safeParse(req.body);
 
-  if (error) {
-    res.status(400).json({ status: 400, message: "Invalid inputs" });
-    return;
+  if (error && error.issues && error.issues[0]?.message) {
+    const errorMessage: string = error.issues[0]?.message;
+    console.log(error.issues);
+    return res.status(400).json({ status: 400, success: false, message: errorMessage, error: error });
   }
 
   if (data) {
@@ -49,11 +54,11 @@ app.post("/signup", async (req, res) => {
       if (createdUser) {
         return res
           .status(200)
-          .json({ status: 200, message: "Signed Up success" });
+          .json({ status: 200, success: true, message: "Signed up successfully" });
       }
     } catch (error) {
       console.log("error while creating user", error);
-      return res.status(500).json({ status: 500, message: "Server error" });
+      return res.status(500).json({ status: 500, success: false, message: "Server error" });
     }
   }
 });
@@ -61,6 +66,11 @@ app.post("/signup", async (req, res) => {
 app.post("/signin", async (req, res) => {
   const { data, error } = UserLoginSchema.safeParse(req.body);
 
+  if (error && error.issues && error.issues[0]?.message) {
+    const errorMessage: string = error.issues[0]?.message;
+    console.log(error.issues);
+    return res.status(400).json({ status: 400, success: false, message: errorMessage, error: error });
+  }
   if (data) {
     const { email, password } = data;
 
@@ -73,7 +83,7 @@ app.post("/signin", async (req, res) => {
     if (!isUserExist) {
       return res
         .status(404)
-        .json({ status: 404, message: "User not found with this email" });
+        .json({ status: 404, success: false, message: "Email is not registered" });
     }
 
     const isPasswordCorrect = await bcrypt.compare(
@@ -84,12 +94,15 @@ app.post("/signin", async (req, res) => {
     if (isPasswordCorrect) {
       const token = jwt.sign({ userId: isUserExist.id }, JWT_SECRET);
 
-      return res.status(200).json({ token, message: "Login success" });
+      const cookieOptions: CookieOptions = {
+        secure: false,
+        httpOnly: false
+      }
+
+      return res.status(200).cookie("token", token, cookieOptions).json({ status: 200, success: true, token, message: "Login success" });
     } else {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(400).json({ status: 400, success: false, message: "Invalid credentials" });
     }
-  } else {
-    return res.status(400).json({ status: 400, message: "Invalid inputs" });
   }
 });
 
