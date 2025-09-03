@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Play } from "@/draw/Play";
-import { Circle, Pencil, Square } from "lucide-react";
+import { Circle, Hand, HandGrab, Pencil, Square } from "lucide-react";
 import { Button } from "./ui/button";
 
-export type Tool = "square" | "circle" | "pencil";
+export type Tool = "square" | "circle" | "pencil" | "drag";
 
 export function Canvas({
   roomId,
@@ -14,6 +14,7 @@ export function Canvas({
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [selectedTool, setSelectedTool] = useState<Tool>("square");
+  const [grabbing, setGrabbing] = useState<boolean>(false);
   const [play, setPlay] = useState<Play>();
 
   useEffect(() => {
@@ -39,6 +40,7 @@ export function Canvas({
         width={window.innerWidth}
         height={window.innerHeight}
         ref={canvasRef}
+        className="overflow-hidden"
       ></canvas>
       <div className="flex flex-col gap-4 fixed left-2 top-2 bg-gray-700 py-3 px-2 rounded">
         <Button
@@ -64,6 +66,14 @@ export function Canvas({
           }}
         >
           <Pencil />
+        </Button>
+        <Button
+          className={`${selectedTool === "drag" ? "bg-blue-400 hover:bg-blue-400" : ""}`}
+          onClick={() => {
+            setSelectedTool("drag");
+          }}
+        >
+          {grabbing ? <HandGrab /> : <Hand />}
         </Button>
       </div>
     </>

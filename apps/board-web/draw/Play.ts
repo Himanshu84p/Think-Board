@@ -3,25 +3,25 @@ import { getExistingShapes } from "./data";
 
 type Shape =
   | {
-    type: "square";
-    startX: number;
-    startY: number;
-    height: number;
-    width: number;
-  }
+      type: "square";
+      startX: number;
+      startY: number;
+      height: number;
+      width: number;
+    }
   | {
-    type: "circle";
-    centerX: number;
-    centerY: number;
-    radius: number;
-  }
+      type: "circle";
+      centerX: number;
+      centerY: number;
+      radius: number;
+    }
   | PencilStroke;
 
 type PencilStroke = {
   type: "pencil";
   startX: number;
   startY: number;
-  strokes: { x: number, y: number }[];
+  strokes: { x: number; y: number }[];
 };
 
 export class Play {
@@ -36,7 +36,13 @@ export class Play {
   private selectedTool: Tool = "square";
   private lastX: number = 0;
   private lastY: number = 0;
-  private pencilStroke: PencilStroke = { type: "pencil", startX: 0, startY: 0, strokes: [] };
+  private pencilStroke: PencilStroke = {
+    type: "pencil",
+    startX: 0,
+    startY: 0,
+    strokes: [],
+  };
+  private pan: { x: number; y: number };
 
   constructor(canvas: HTMLCanvasElement, socket: WebSocket, roomId: string) {
     this.canvas = canvas;
@@ -47,6 +53,7 @@ export class Play {
     this.startY = 0;
     this.initSocketHandler();
     this.addMouseEventHandlers();
+    this.pan = { x: 0, y: 0 };
   }
 
   async initPlay() {
@@ -59,10 +66,18 @@ export class Play {
   }
 
   clearCanvas() {
+    // Always reset transform before clearing/drawing
+    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+    // Clear background
     this.ctx.fillStyle = "black";
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    //draw existing elements
+    // Apply pan transform for drawing shapes
+    this.ctx.save();
+    this.ctx.translate(this.pan.x, this.pan.y);
+
+    // Draw existing elements with current pan
     this.allShapes.map((dr) => {
       this.ctx.strokeStyle = "white";
       if (dr.type === "square") {
@@ -82,6 +97,8 @@ export class Play {
         });
       }
     });
+
+    this.ctx.restore();
   }
 
   setToolBar(selectedTool: Tool) {
@@ -116,6 +133,7 @@ export class Play {
     console.log("mouse down event", this.selectedTool);
 
     this.clearCanvas();
+
     this.startX = e.clientX;
     this.startY = e.clientY;
     this.clicked = true;
@@ -123,15 +141,15 @@ export class Play {
       // this.ctx.lineCap = "round";
       // this.ctx.lineJoin = "round";
       this.ctx.beginPath();
-      this.ctx.moveTo(e.clientX, e.clientY);
+      this.ctx.moveTo(this.startX, this.startY);
       // console.log(this.pencilStroke);
       [this.lastX, this.lastY] = [e.clientX, e.clientY];
       this.pencilStroke = {
         type: "pencil",
         startX: e.clientX,
         startY: e.clientY,
-        strokes: []
-      }
+        strokes: [],
+      };
     }
   };
 
@@ -174,6 +192,17 @@ export class Play {
         this.ctx.stroke();
         this.lastX = e.offsetX;
         this.lastY = e.offsetY;
+      } else if (this.selectedTool === "drag") {
+        // Incremental pan by delta from last event
+        const dx = e.clientX - this.startX;
+        const dy = e.clientY - this.startY;
+        this.pan.x += dx;
+        this.pan.y += dy;
+        // Update starting point for next move
+        this.startX = e.clientX;
+        this.startY = e.clientY;
+        // Redraw with new pan applied in clearCanvas()
+        this.clearCanvas();
       }
     }
   };
@@ -227,15 +256,16 @@ export class Play {
           radius: radius,
         };
       } else if (this.selectedTool === "pencil") {
-        currDraw = this.pencilStroke
+        currDraw = this.pencilStroke;
         this.pencilStroke = {
           type: "pencil",
           startX: this.lastX,
           startY: this.lastY,
-          strokes: []
-        }
+          strokes: [],
+        };
       }
       if (!currDraw) {
+        this.clicked = false;
         return;
       }
       //broadcast drawing to the room
