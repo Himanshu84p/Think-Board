@@ -54,6 +54,7 @@ wss.on("connection", function (socket, request) {
     rooms: [],
   });
 
+  // console.log("user connected:", users);
   console.log("socket connected to the server");
 
   socket.on("message", async function (data) {
@@ -62,16 +63,19 @@ wss.on("connection", function (socket, request) {
     //   return;
     // }
     const parsedData = JSON.parse(data.toString());
+    // console.log("parsed data ", parsedData)
 
     if (parsedData && parsedData.type === "join_room") {
       //check whether room exist
       //check whether already joined room or not
+      console.log("joined room");
       const user = users.find((x) => x.ws === socket);
 
       user?.rooms.push(parsedData.roomId);
     }
 
     if (parsedData && parsedData.type === "leave_room") {
+      console.log("leave room");
       const user = users.find((x) => x.ws === socket);
       user?.rooms.filter((x) => x != parsedData.roomId);
     }
@@ -79,6 +83,7 @@ wss.on("connection", function (socket, request) {
     if (parsedData && parsedData.type === "chat") {
       const message: string = parsedData.message;
       const roomId: number = parsedData.roomId;
+      // console.log("chat message", message);
       if (message) {
         try {
           //find broadcast room to send message, then send it to the users which are connected to that room
@@ -95,6 +100,7 @@ wss.on("connection", function (socket, request) {
             },
           });
 
+          console.log("db saved chat", sentChat);
           joinedUsers.forEach((user) => {
             user.ws.send(
               JSON.stringify({
@@ -112,7 +118,11 @@ wss.on("connection", function (socket, request) {
     }
 
     socket.on("close", function (data) {
-      users.filter((x) => x.ws != socket);
+      const idx = users.findIndex((x) => x.ws === socket);
+      if (idx != -1) {
+        users.splice(idx, 1);
+      }
+      console.log("user disconnected");
     });
   });
 });

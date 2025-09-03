@@ -4,7 +4,7 @@ import axios from "axios";
 
 async function getRoomId(slug: string) {
   const response = await axios.get(`${HTTP_URL}/roomId/${slug}`);
-  console.log("response", response);
+  // console.log("response", response);
   return response.data.roomId;
 }
 

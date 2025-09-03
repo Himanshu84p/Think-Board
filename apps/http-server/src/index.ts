@@ -150,7 +150,7 @@ app.get("/chats/:roomId", async (req, res) => {
       where: {
         roomId,
       },
-      take: 45,
+      take: 200,
       orderBy: {
         createdAt: "asc",
       },

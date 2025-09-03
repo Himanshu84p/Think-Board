@@ -8,11 +8,18 @@ export function RoomCanvas({ roomId }: { roomId: string }) {
   const { socket, loading } = useSocket();
 
   useEffect(() => {
-    // console.log("joinig room", socket, loading);
-    if (socket && !loading) {
-      socket.send(JSON.stringify({ type: "join_room", roomId }));
-    }
-  }, [socket]);
+    console.log("joinig room", loading);
+    if (!socket || loading) return;
+
+    socket.send(JSON.stringify({ type: "join_room", roomId }));
+
+    return () => {
+      console.log("leaving room", loading);
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: "leave_room", roomId }));
+      }
+    };
+  }, [socket, loading, roomId]);
 
   if (!socket) {
     return <div>Loading Canvas......</div>;

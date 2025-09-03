@@ -3,23 +3,26 @@ import { getExistingShapes } from "./data";
 
 type Shape =
   | {
-      type: "square";
-      startX: number;
-      startY: number;
-      height: number;
-      width: number;
-    }
+    type: "square";
+    startX: number;
+    startY: number;
+    height: number;
+    width: number;
+  }
   | {
-      type: "circle";
-      centerX: number;
-      centerY: number;
-      radius: number;
-    }
-  | {
-      type: "pencil";
-      lineX: number;
-      lineY: number;
-    };
+    type: "circle";
+    centerX: number;
+    centerY: number;
+    radius: number;
+  }
+  | PencilStroke;
+
+type PencilStroke = {
+  type: "pencil";
+  startX: number;
+  startY: number;
+  strokes: { x: number, y: number }[];
+};
 
 export class Play {
   private canvas: HTMLCanvasElement;
@@ -33,6 +36,7 @@ export class Play {
   private selectedTool: Tool = "square";
   private lastX: number = 0;
   private lastY: number = 0;
+  private pencilStroke: PencilStroke = { type: "pencil", startX: 0, startY: 0, strokes: [] };
 
   constructor(canvas: HTMLCanvasElement, socket: WebSocket, roomId: string) {
     this.canvas = canvas;
@@ -69,6 +73,13 @@ export class Play {
         this.ctx.strokeStyle = "#fff";
         this.ctx.stroke();
         this.ctx.closePath();
+      } else if (dr.type === "pencil") {
+        this.ctx.beginPath();
+        this.ctx.moveTo(dr.startX, dr.startY);
+        dr.strokes.forEach((s) => {
+          this.ctx.lineTo(s.x, s.y);
+          this.ctx.stroke();
+        });
       }
     });
   }
@@ -80,7 +91,7 @@ export class Play {
   initSocketHandler() {
     this.socket.onmessage = (event) => {
       const parsedData = JSON.parse(event.data);
-      console.log("parsed message ", parsedData);
+      // console.log("parsed message ", parsedData);
       if (parsedData.type === "chat") {
         const message: Shape = JSON.parse(parsedData.message);
         this.allShapes.push(message);
@@ -109,20 +120,27 @@ export class Play {
     this.startY = e.clientY;
     this.clicked = true;
     if (this.selectedTool === "pencil") {
-      this.ctx.strokeStyle = "#333";
-      //   this.ctx.lineWidth = 2;
-      this.ctx.lineCap = "round";
-      this.ctx.lineJoin = "round";
+      // this.ctx.lineCap = "round";
+      // this.ctx.lineJoin = "round";
       this.ctx.beginPath();
-      this.ctx.moveTo(e.offsetX, e.offsetY);
+      this.ctx.moveTo(e.clientX, e.clientY);
+      // console.log(this.pencilStroke);
+      [this.lastX, this.lastY] = [e.clientX, e.clientY];
+      this.pencilStroke = {
+        type: "pencil",
+        startX: e.clientX,
+        startY: e.clientY,
+        strokes: []
+      }
     }
   };
 
   mouseMoveHandler = (e: MouseEvent) => {
     if (this.clicked) {
       console.log("mouse move event", this.selectedTool);
-      this.clearCanvas();
-
+      if (this.selectedTool != "pencil") {
+        this.clearCanvas();
+      }
       if (this.selectedTool === "square") {
         this.ctx.strokeStyle = "white";
         this.ctx.strokeRect(
@@ -149,9 +167,13 @@ export class Play {
         this.ctx.stroke();
         this.ctx.closePath();
       } else if (this.selectedTool === "pencil") {
-        this.ctx.lineTo(e.offsetX, e.offsetY);
-        [this.lastX, this.lastY] = [e.offsetX, e.offsetY];
+        // console.log(this.lastX, this.lastY);
+        this.ctx.lineTo(this.lastX, this.lastY);
+        this.pencilStroke.strokes.push({ x: this.lastX, y: this.lastY });
+        this.ctx.strokeStyle = "white";
         this.ctx.stroke();
+        this.lastX = e.offsetX;
+        this.lastY = e.offsetY;
       }
     }
   };
@@ -205,13 +227,13 @@ export class Play {
           radius: radius,
         };
       } else if (this.selectedTool === "pencil") {
-        // this.ctx.closePath();
-
-        currDraw = {
+        currDraw = this.pencilStroke
+        this.pencilStroke = {
           type: "pencil",
-          lineX: this.lastX,
-          lineY: this.lastY,
-        };
+          startX: this.lastX,
+          startY: this.lastY,
+          strokes: []
+        }
       }
       if (!currDraw) {
         return;
@@ -230,6 +252,15 @@ export class Play {
           })
         );
       } else if (this.selectedTool === "circle") {
+        this.socket.send(
+          JSON.stringify({
+            type: "chat",
+            roomId: this.roomId,
+            message: stringiDraw,
+            userId: "cmerm0m5b0000v4toyplgzn1d",
+          })
+        );
+      } else if (this.selectedTool === "pencil") {
         this.socket.send(
           JSON.stringify({
             type: "chat",
