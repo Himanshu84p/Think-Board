@@ -99,7 +99,12 @@ app.post("/signin", async (req, res) => {
         httpOnly: false
       }
 
-      return res.status(200).cookie("token", token, cookieOptions).json({ status: 200, success: true, token, message: "Login success" });
+      return res.status(200).cookie("token", token, cookieOptions).json({
+        status: 200, success: true, token, message: "Login success", data: {
+          userId: isUserExist.id,
+          email: isUserExist.email
+        }
+      });
     } else {
       return res.status(400).json({ status: 400, success: false, message: "Invalid credentials" });
     }

@@ -3,18 +3,18 @@ import { getExistingShapes } from "./data";
 
 type Shape =
   | {
-      type: "square";
-      startX: number;
-      startY: number;
-      height: number;
-      width: number;
-    }
+    type: "square";
+    startX: number;
+    startY: number;
+    height: number;
+    width: number;
+  }
   | {
-      type: "circle";
-      centerX: number;
-      centerY: number;
-      radius: number;
-    }
+    type: "circle";
+    centerX: number;
+    centerY: number;
+    radius: number;
+  }
   | PencilStroke;
 
 type PencilStroke = {
@@ -43,8 +43,9 @@ export class Play {
     strokes: [],
   };
   private pan: { x: number; y: number };
+  private userId: string;
 
-  constructor(canvas: HTMLCanvasElement, socket: WebSocket, roomId: string) {
+  constructor(canvas: HTMLCanvasElement, socket: WebSocket, roomId: string, userId: string) {
     this.canvas = canvas;
     this.socket = socket;
     this.roomId = roomId;
@@ -54,6 +55,7 @@ export class Play {
     this.initSocketHandler();
     this.addMouseEventHandlers();
     this.pan = { x: 0, y: 0 };
+    this.userId = userId;
   }
 
   async initPlay() {
@@ -75,6 +77,7 @@ export class Play {
 
     // Apply pan transform for drawing shapes
     this.ctx.save();
+    console.log("pan", this.pan)
     this.ctx.translate(this.pan.x, this.pan.y);
 
     // Draw existing elements with current pan
@@ -130,10 +133,10 @@ export class Play {
   }
 
   mouseDownHandler = (e: MouseEvent) => {
-    console.log("mouse down event", this.selectedTool);
+    console.log("1 mouse down event", this.startX, this.startY);
 
     this.clearCanvas();
-
+    console.log(" 2 mouse down event", this.startX, this.startY);
     this.startX = e.clientX;
     this.startY = e.clientY;
     this.clicked = true;
@@ -222,11 +225,12 @@ export class Play {
           e.clientY - this.startY
         );
 
-        //set currdraw
+        console.log(" startX, startY ", this.startX, this.startY, "this.pan.x", this.pan.x, this.pan.y);
+        //set currdraw as per panning coordinates after translate
         currDraw = {
           type: "square",
-          startX: this.startX,
-          startY: this.startY,
+          startX: this.startX - this.pan.x,
+          startY: this.startY - this.pan.y,
           height: e.clientX - this.startX,
           width: e.clientY - this.startY,
         };
@@ -248,19 +252,22 @@ export class Play {
         this.ctx.stroke();
         this.ctx.closePath();
 
+        const centerX = ((this.startX + this.pan.x) / 2);
+        const centerY = ((this.startY + this.pan.y) / 2);
+        console.log("centerX, centerY, radius", centerX, centerY, radius, this.startX, this.startY);
         //set currdraw
         currDraw = {
           type: "circle",
-          centerX: (this.startX + e.clientX) / 2,
-          centerY: (this.startY + e.clientY) / 2,
+          centerX: centerX,
+          centerY: centerY,
           radius: radius,
         };
       } else if (this.selectedTool === "pencil") {
         currDraw = this.pencilStroke;
         this.pencilStroke = {
           type: "pencil",
-          startX: this.lastX,
-          startY: this.lastY,
+          startX: this.lastX - this.pan.x,
+          startY: this.lastY - this.pan.y,
           strokes: [],
         };
       }
@@ -278,7 +285,7 @@ export class Play {
             type: "chat",
             roomId: this.roomId,
             message: stringiDraw,
-            userId: "cmerm0m5b0000v4toyplgzn1d",
+            userId: this.userId,
           })
         );
       } else if (this.selectedTool === "circle") {
@@ -287,7 +294,7 @@ export class Play {
             type: "chat",
             roomId: this.roomId,
             message: stringiDraw,
-            userId: "cmerm0m5b0000v4toyplgzn1d",
+            userId: this.userId,
           })
         );
       } else if (this.selectedTool === "pencil") {
@@ -296,7 +303,7 @@ export class Play {
             type: "chat",
             roomId: this.roomId,
             message: stringiDraw,
-            userId: "cmerm0m5b0000v4toyplgzn1d",
+            userId: this.userId,
           })
         );
       }

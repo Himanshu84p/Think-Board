@@ -16,14 +16,15 @@ export function Canvas({
   const [selectedTool, setSelectedTool] = useState<Tool>("square");
   const [grabbing, setGrabbing] = useState<boolean>(false);
   const [play, setPlay] = useState<Play>();
-
   useEffect(() => {
     play?.setToolBar(selectedTool);
   }, [play, selectedTool]);
 
   useEffect(() => {
     if (canvasRef.current) {
-      const play = new Play(canvasRef.current, socket, roomId);
+      const userId = localStorage.getItem("userId")!;
+      // console.log("userId", userId);
+      const play = new Play(canvasRef.current, socket, roomId, userId);
       setPlay(play);
       play.initPlay();
 

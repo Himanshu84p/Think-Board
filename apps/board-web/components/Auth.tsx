@@ -44,6 +44,9 @@ export function Auth({ signIn }: { signIn: boolean }) {
         });
 
         if (response.status) {
+          const userId = response.data.data.userId;
+          localStorage.setItem("userId", userId);
+          localStorage.setItem("token", response.data.token);
           toast.success("Signed in successfully");
           clearControls();
           setLoading(false);
