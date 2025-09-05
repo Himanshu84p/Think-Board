@@ -72,7 +72,7 @@ export class Play {
     this.ctx.setTransform(1, 0, 0, 1, 0, 0);
 
     // Clear background
-    this.ctx.fillStyle = "black";
+    this.ctx.fillStyle = "rgb(49, 56, 59)";
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
     // Apply pan transform for drawing shapes
@@ -136,10 +136,10 @@ export class Play {
     console.log("1 mouse down event", this.startX, this.startY);
 
     this.clearCanvas();
-    console.log(" 2 mouse down event", this.startX, this.startY);
     this.startX = e.clientX;
     this.startY = e.clientY;
     this.clicked = true;
+    console.log(" 2 mouse down event", this.startX, this.startY);
     if (this.selectedTool === "pencil") {
       // this.ctx.lineCap = "round";
       // this.ctx.lineJoin = "round";
@@ -252,9 +252,9 @@ export class Play {
         this.ctx.stroke();
         this.ctx.closePath();
 
-        const centerX = ((this.startX + this.pan.x) / 2);
-        const centerY = ((this.startY + this.pan.y) / 2);
-        console.log("centerX, centerY, radius", centerX, centerY, radius, this.startX, this.startY);
+        const centerX = ((((this.startX - this.pan.x) + (e.clientX - this.pan.x)) / 2));
+        const centerY = (((this.startY - this.pan.y + (e.clientY - this.pan.y)) / 2));
+        console.log("centerX, centerY, radius", centerX, centerY, radius, "this.startX", this.startX, "client x", e.clientX, this.startY);
         //set currdraw
         currDraw = {
           type: "circle",
@@ -263,11 +263,14 @@ export class Play {
           radius: radius,
         };
       } else if (this.selectedTool === "pencil") {
+        this.pencilStroke.startX = this.startX - this.pan.x;
+        this.pencilStroke.startY = this.startY - this.pan.y;
+        this.pencilStroke.strokes = this.pencilStroke.strokes.map((s) => ({ x: s.x - this.pan.x, y: s.y - this.pan.y }));
         currDraw = this.pencilStroke;
         this.pencilStroke = {
           type: "pencil",
-          startX: this.lastX - this.pan.x,
-          startY: this.lastY - this.pan.y,
+          startX: this.lastX,
+          startY: this.lastY,
           strokes: [],
         };
       }
