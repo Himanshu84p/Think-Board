@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { Play } from "@/draw/Play";
-import { Circle, Hand, HandGrab, Pencil, Square } from "lucide-react";
+import { Circle, Eraser, Hand, HandGrab, Pencil, Square } from "lucide-react";
 import { Button } from "./ui/button";
 
-export type Tool = "square" | "circle" | "pencil" | "drag";
+export type Tool = "square" | "circle" | "pencil" | "drag" | "eraser";
 
 export function Canvas({
   roomId,
@@ -13,9 +13,37 @@ export function Canvas({
   socket: WebSocket;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [selectedTool, setSelectedTool] = useState<Tool>("square");
+  const [selectedTool, setSelectedTool] = useState<Tool>("drag");
   const [grabbing, setGrabbing] = useState<boolean>(false);
   const [play, setPlay] = useState<Play>();
+
+  const Tools: { name: string; icon: ReactNode; tool: Tool }[] = [
+    {
+      name: "Square",
+      icon: <Square />,
+      tool: "square",
+    },
+    {
+      name: "Circle",
+      icon: <Circle />,
+      tool: "circle",
+    },
+    {
+      name: "Pencil",
+      icon: <Pencil />,
+      tool: "pencil",
+    },
+    {
+      name: "Drag",
+      icon: grabbing ? <HandGrab /> : <Hand />,
+      tool: "drag",
+    },
+    {
+      name: "Eraser",
+      icon: <Eraser />,
+      tool: "eraser",
+    },
+  ];
   useEffect(() => {
     play?.setToolBar(selectedTool);
   }, [play, selectedTool]);
@@ -44,7 +72,18 @@ export function Canvas({
         className="overflow-hidden"
       ></canvas>
       <div className="flex flex-col gap-4 fixed left-2 top-2 bg-gray-700 py-3 px-2 rounded">
-        <Button
+        {Tools.map((tool) => (
+          <Button
+            key={tool.name}
+            className={`${selectedTool === tool.tool ? "bg-blue-400 hover:bg-blue-400" : ""}`}
+            onClick={() => {
+              setSelectedTool(tool.tool);
+            }}
+          >
+            {tool.icon}
+          </Button>
+        ))}
+        {/* <Button
           className={`${selectedTool === "square" ? "bg-blue-400 hover:bg-blue-400" : ""}`}
           onClick={() => {
             setSelectedTool("square");
@@ -76,6 +115,14 @@ export function Canvas({
         >
           {grabbing ? <HandGrab /> : <Hand />}
         </Button>
+         <Button
+          className={`${selectedTool === "drag" ? "bg-blue-400 hover:bg-blue-400" : ""}`}
+          onClick={() => {
+            setSelectedTool("drag");
+          }}
+        >
+          {grabbing ? <HandGrab /> : <Hand />}
+        </Button> */}
       </div>
     </>
   );

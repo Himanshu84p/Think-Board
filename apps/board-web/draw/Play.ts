@@ -33,7 +33,7 @@ export class Play {
   private startX: number = 0;
   private startY: number = 0;
   private clicked: boolean = false;
-  private selectedTool: Tool = "square";
+  private selectedTool: Tool = "drag";
   private lastX: number = 0;
   private lastY: number = 0;
   private pencilStroke: PencilStroke = {
@@ -133,13 +133,13 @@ export class Play {
   }
 
   mouseDownHandler = (e: MouseEvent) => {
-    console.log("1 mouse down event", this.startX, this.startY);
+    // console.log("1 mouse down event", this.startX, this.startY);
 
     this.clearCanvas();
     this.startX = e.clientX;
     this.startY = e.clientY;
     this.clicked = true;
-    console.log(" 2 mouse down event", this.startX, this.startY);
+    // console.log(" 2 mouse down event", this.startX, this.startY);
     if (this.selectedTool === "pencil") {
       // this.ctx.lineCap = "round";
       // this.ctx.lineJoin = "round";
@@ -206,6 +206,15 @@ export class Play {
         this.startY = e.clientY;
         // Redraw with new pan applied in clearCanvas()
         this.clearCanvas();
+      } else if (this.selectedTool === "eraser") {
+        console.log("eraser selected", this.startX, this.startY, e.clientX, e.clientY)
+
+        //?1.erase from the canvas 
+        // this.allShapes.map((s) => ({
+
+        // }))
+        this.ctx.clearRect(e.clientX, e.clientY, 50, 50);
+        //erase from the db
       }
     }
   };
