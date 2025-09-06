@@ -1,5 +1,6 @@
 import { Tool } from "@/components/Canvas";
 import { getExistingShapes } from "./data";
+import { parse } from "path";
 
 type Shape =
   | {
@@ -90,7 +91,7 @@ export class Play {
 
     // Apply pan transform for drawing shapes
     this.ctx.save();
-    console.log("pan", this.pan);
+    // console.log("pan", this.pan);
     this.ctx.translate(this.pan.x, this.pan.y);
 
     // Draw existing elements with current pan
@@ -129,6 +130,13 @@ export class Play {
         const message: Shape = JSON.parse(parsedData.message);
         this.allShapes.push(message);
 
+        this.clearCanvas();
+      } else if (parsedData.type === "erase") {
+        const message: Shape = JSON.parse(parsedData.message);
+        //stringified,bcz object reference is different although values is same
+        this.allShapes = this.allShapes.filter(
+          (s) => JSON.stringify(s) != JSON.stringify(message)
+        );
         this.clearCanvas();
       }
     };
@@ -171,7 +179,7 @@ export class Play {
 
   mouseMoveHandler = (e: MouseEvent) => {
     if (this.clicked) {
-      console.log("mouse move event", this.selectedTool);
+      // console.log("mouse move event", this.selectedTool);
       if (this.selectedTool != "pencil") {
         this.clearCanvas();
       }
@@ -220,13 +228,13 @@ export class Play {
         // Redraw with new pan applied in clearCanvas()
         this.clearCanvas();
       } else if (this.selectedTool === "eraser") {
-        console.log(
-          "eraser selected",
-          this.startX,
-          this.startY,
-          e.clientX,
-          e.clientY
-        );
+        // console.log(
+        //   "eraser selected",
+        //   this.startX,
+        //   this.startY,
+        //   e.clientX,
+        //   e.clientY
+        // );
 
         //?1.erase from the canvas
         const eraser: Eraser = {
@@ -244,7 +252,7 @@ export class Play {
   };
 
   mouseUpHandler = (e: MouseEvent) => {
-    console.log("mouse up event ", this.selectedTool);
+    // console.log("mouse up event ", this.selectedTool);
     if (this.clicked) {
       this.clearCanvas();
       let currDraw: Shape | null = null;
@@ -258,14 +266,14 @@ export class Play {
           e.clientY - this.startY
         );
 
-        console.log(
-          " startX, startY ",
-          this.startX,
-          this.startY,
-          "this.pan.x",
-          this.pan.x,
-          this.pan.y
-        );
+        // console.log(
+        //   " startX, startY ",
+        //   this.startX,
+        //   this.startY,
+        //   "this.pan.x",
+        //   this.pan.x,
+        //   this.pan.y
+        // );
         //set currdraw as per panning coordinates after translate
         currDraw = {
           type: "square",
@@ -296,17 +304,17 @@ export class Play {
           (this.startX - this.pan.x + (e.clientX - this.pan.x)) / 2;
         const centerY =
           (this.startY - this.pan.y + (e.clientY - this.pan.y)) / 2;
-        console.log(
-          "centerX, centerY, radius",
-          centerX,
-          centerY,
-          radius,
-          "this.startX",
-          this.startX,
-          "client x",
-          e.clientX,
-          this.startY
-        );
+        // console.log(
+        //   "centerX, centerY, radius",
+        //   centerX,
+        //   centerY,
+        //   radius,
+        //   "this.startX",
+        //   this.startX,
+        //   "client x",
+        //   e.clientX,
+        //   this.startY
+        // );
         //set currdraw
         currDraw = {
           type: "circle",
@@ -394,7 +402,8 @@ export class Play {
           x1,
           y1,
           x2,
-          y2
+          y2,
+          shape
         )
       );
     }
@@ -403,19 +412,38 @@ export class Play {
       const dx = eraser.x - shape.centerX;
       const dy = eraser.y - shape.centerY;
       const distance = Math.sqrt(dx * dx + dy * dy);
-      return (
+      const result =
         distance >= shape.radius - eraser.radius &&
-        distance <= shape.radius + eraser.radius
-      );
+        distance <= shape.radius + eraser.radius;
+
+      if (result) {
+        const msg = JSON.stringify({
+          type: "erase",
+          message: JSON.stringify(shape),
+          roomId: this.roomId,
+        });
+        this.socket.send(msg);
+      }
+      return result;
     }
 
     if (shape.type === "pencil") {
       // Check if eraser is close to any stroke point
-      return shape.strokes.some((pt) => {
+      const result = shape.strokes.some((pt) => {
         const dx = eraser.x - pt.x;
         const dy = eraser.y - pt.y;
         return dx * dx + dy * dy <= eraser.radius * eraser.radius;
       });
+      // console.log("pencil result", result);
+      if (result) {
+        const msg = JSON.stringify({
+          type: "erase",
+          message: JSON.stringify(shape),
+          roomId: this.roomId,
+        });
+        this.socket.send(msg);
+      }
+      return result;
     }
 
     return false;
@@ -427,7 +455,8 @@ export class Play {
     x1: number,
     y1: number,
     x2: number,
-    y2: number
+    y2: number,
+    shape: Shape
   ): boolean {
     const dx = x2 - x1;
     const dy = y2 - y1;
@@ -442,6 +471,17 @@ export class Play {
 
     const distX = cx - closestX;
     const distY = cy - closestY;
-    return distX * distX + distY * distY <= r * r;
+
+    const result = distX * distX + distY * distY <= r * r;
+    if (result) {
+      // console.log("shape erased", shape);
+      const msg = JSON.stringify({
+        type: "erase",
+        message: JSON.stringify(shape),
+        roomId: this.roomId,
+      });
+      this.socket.send(msg);
+    }
+    return result;
   }
 }

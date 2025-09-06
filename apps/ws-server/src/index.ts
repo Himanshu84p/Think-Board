@@ -68,14 +68,14 @@ wss.on("connection", function (socket, request) {
     if (parsedData && parsedData.type === "join_room") {
       //check whether room exist
       //check whether already joined room or not
-      console.log("joined room");
+      // console.log("joined room");
       const user = users.find((x) => x.ws === socket);
 
       user?.rooms.push(parsedData.roomId);
     }
 
     if (parsedData && parsedData.type === "leave_room") {
-      console.log("leave room");
+      // console.log("leave room");
       const user = users.find((x) => x.ws === socket);
       user?.rooms.filter((x) => x != parsedData.roomId);
     }
@@ -100,7 +100,7 @@ wss.on("connection", function (socket, request) {
             },
           });
 
-          console.log("db saved chat", sentChat);
+          // console.log("db saved chat", sentChat);
           joinedUsers.forEach((user) => {
             user.ws.send(
               JSON.stringify({
@@ -111,8 +111,44 @@ wss.on("connection", function (socket, request) {
             );
           });
         } catch (error) {
-          socket.send("Invalid message");
+          // socket.send("Invalid message");
           return;
+        }
+      }
+    } else if (parsedData && parsedData.type === "erase") {
+      // console.log("shape erased", parsedData);
+      const message = parsedData.message;
+      const roomId = parsedData.roomId;
+
+      if (message) {
+        try {
+          const erasedShape = await prisma.chat.findFirst({
+            where: {
+              message: message,
+            },
+          });
+          // console.log("shape found", erasedShape);
+          if (erasedShape) {
+            const deletedShape = await prisma.chat.delete({
+              where: {
+                id: erasedShape.id,
+              },
+            });
+            // console.log("deleted shape", deletedShape);
+
+            users.forEach(async (u) => {
+              if (u.rooms.includes(roomId)) {
+                const parsedMsg = JSON.stringify({
+                  type: "erase",
+                  message: message,
+                  roomId: roomId,
+                });
+                u.ws.send(parsedMsg);
+              }
+            });
+          }
+        } catch (error) {
+          console.log("error while erasing", error);
         }
       }
     }
@@ -122,7 +158,7 @@ wss.on("connection", function (socket, request) {
       if (idx != -1) {
         users.splice(idx, 1);
       }
-      console.log("user disconnected");
+      // console.log("user disconnected");
     });
   });
 });

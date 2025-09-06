@@ -12,9 +12,11 @@ import bcrypt from "bcrypt";
 import cors, { CorsOptions } from "cors";
 import cookieParser from "cookie-parser";
 
-
 const app = express();
-const corsOptions: CorsOptions = { origin: ["http://localhost:3000"], credentials: true };
+const corsOptions: CorsOptions = {
+  origin: ["http://localhost:3000"],
+  credentials: true,
+};
 
 app.use(express.json());
 app.use(cors(corsOptions));
@@ -30,7 +32,12 @@ app.post("/signup", async (req, res) => {
   if (error && error.issues && error.issues[0]?.message) {
     const errorMessage: string = error.issues[0]?.message;
     console.log(error.issues);
-    return res.status(400).json({ status: 400, success: false, message: errorMessage, error: error });
+    return res.status(400).json({
+      status: 400,
+      success: false,
+      message: errorMessage,
+      error: error,
+    });
   }
 
   if (data) {
@@ -52,13 +59,17 @@ app.post("/signup", async (req, res) => {
       });
 
       if (createdUser) {
-        return res
-          .status(200)
-          .json({ status: 200, success: true, message: "Signed up successfully" });
+        return res.status(200).json({
+          status: 200,
+          success: true,
+          message: "Signed up successfully",
+        });
       }
     } catch (error) {
       console.log("error while creating user", error);
-      return res.status(500).json({ status: 500, success: false, message: "Server error" });
+      return res
+        .status(500)
+        .json({ status: 500, success: false, message: "Server error" });
     }
   }
 });
@@ -69,7 +80,12 @@ app.post("/signin", async (req, res) => {
   if (error && error.issues && error.issues[0]?.message) {
     const errorMessage: string = error.issues[0]?.message;
     console.log(error.issues);
-    return res.status(400).json({ status: 400, success: false, message: errorMessage, error: error });
+    return res.status(400).json({
+      status: 400,
+      success: false,
+      message: errorMessage,
+      error: error,
+    });
   }
   if (data) {
     const { email, password } = data;
@@ -81,9 +97,11 @@ app.post("/signin", async (req, res) => {
     });
 
     if (!isUserExist) {
-      return res
-        .status(404)
-        .json({ status: 404, success: false, message: "Email is not registered" });
+      return res.status(404).json({
+        status: 404,
+        success: false,
+        message: "Email is not registered",
+      });
     }
 
     const isPasswordCorrect = await bcrypt.compare(
@@ -96,17 +114,26 @@ app.post("/signin", async (req, res) => {
 
       const cookieOptions: CookieOptions = {
         secure: false,
-        httpOnly: false
-      }
+        httpOnly: false,
+      };
 
-      return res.status(200).cookie("token", token, cookieOptions).json({
-        status: 200, success: true, token, message: "Login success", data: {
-          userId: isUserExist.id,
-          email: isUserExist.email
-        }
-      });
+      return res
+        .status(200)
+        .cookie("token", token, cookieOptions)
+        .json({
+          status: 200,
+          success: true,
+          token,
+          message: "Login success",
+          data: {
+            userId: isUserExist.id,
+            email: isUserExist.email,
+          },
+        });
     } else {
-      return res.status(400).json({ status: 400, success: false, message: "Invalid credentials" });
+      return res
+        .status(400)
+        .json({ status: 400, success: false, message: "Invalid credentials" });
     }
   }
 });
@@ -160,7 +187,7 @@ app.get("/chats/:roomId", async (req, res) => {
         createdAt: "asc",
       },
     });
-
+    // console.log(chats);
     return res
       .status(200)
       .json({ chats, message: "chats fetched successfully" });
