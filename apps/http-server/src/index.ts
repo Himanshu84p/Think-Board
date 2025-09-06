@@ -21,6 +21,7 @@ const corsOptions: CorsOptions = {
 app.use(express.json());
 app.use(cors(corsOptions));
 app.use(cookieParser());
+app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (req, res) => {
   res.send("hello there");
@@ -75,11 +76,12 @@ app.post("/signup", async (req, res) => {
 });
 
 app.post("/signin", async (req, res) => {
+  console.log("body", req.body);
   const { data, error } = UserLoginSchema.safeParse(req.body);
 
   if (error && error.issues && error.issues[0]?.message) {
     const errorMessage: string = error.issues[0]?.message;
-    console.log(error.issues);
+    console.log(error);
     return res.status(400).json({
       status: 400,
       success: false,
@@ -174,7 +176,7 @@ app.post("/create-room", isAuthenticated, async (req, res) => {
   }
 });
 
-app.get("/chats/:roomId", async (req, res) => {
+app.get("/chats/:roomId", isAuthenticated, async (req, res) => {
   try {
     const roomId = Number(req.params.roomId);
 
@@ -196,7 +198,7 @@ app.get("/chats/:roomId", async (req, res) => {
   }
 });
 
-app.get("/roomId/:slug", async (req, res) => {
+app.get("/roomId/:slug", isAuthenticated, async (req, res) => {
   try {
     const slug = req.params.slug;
 

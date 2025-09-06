@@ -86,7 +86,7 @@ export class Play {
     this.ctx.setTransform(1, 0, 0, 1, 0, 0);
 
     // Clear background
-    this.ctx.fillStyle = "rgb(49, 56, 59)";
+    this.ctx.fillStyle = "rgb(32 35 42)";
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
     // Apply pan transform for drawing shapes

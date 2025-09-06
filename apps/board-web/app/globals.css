@@ -117,3 +117,12 @@
     @apply bg-background text-foreground;
   }
 }
+
+.custom-cursor-pencil {
+  cursor:
+    url("../public/pencil.png") 0 16,
+    auto;
+}
+.custom-cursor-eraser {
+  cursor: url("../public/circle.png"), auto;
+}

@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { Play } from "@/draw/Play";
-import { Circle, Eraser, Hand, HandGrab, Pencil, Square } from "lucide-react";
+import { Circle, Eraser, Hand, Pencil, Square } from "lucide-react";
 import { Button } from "./ui/button";
 
 export type Tool = "square" | "circle" | "pencil" | "drag" | "eraser";
@@ -16,34 +16,46 @@ export function Canvas({
   const [selectedTool, setSelectedTool] = useState<Tool>("drag");
   const [grabbing, setGrabbing] = useState<boolean>(false);
   const [play, setPlay] = useState<Play>();
+  const [cursorStyle, setCursorStyle] = useState<string>("cursor-grab");
 
-  const Tools: { name: string; icon: ReactNode; tool: Tool }[] = [
+  const Tools: {
+    name: string;
+    icon: ReactNode;
+    tool: Tool;
+    cursorStyle: string;
+  }[] = [
     {
       name: "Square",
       icon: <Square />,
       tool: "square",
+      cursorStyle: "cursor-crosshair",
     },
     {
       name: "Circle",
       icon: <Circle />,
       tool: "circle",
+      cursorStyle: "cursor-crosshair",
     },
     {
       name: "Pencil",
       icon: <Pencil />,
       tool: "pencil",
+      cursorStyle: "custom-cursor-pencil",
     },
     {
       name: "Drag",
-      icon: grabbing ? <HandGrab /> : <Hand />,
+      icon: <Hand />,
       tool: "drag",
+      cursorStyle: `${grabbing ? "cursor-grabbing" : "cursor-grab"}`,
     },
     {
       name: "Eraser",
       icon: <Eraser />,
       tool: "eraser",
+      cursorStyle: "custom-cursor-eraser",
     },
   ];
+
   useEffect(() => {
     play?.setToolBar(selectedTool);
   }, [play, selectedTool]);
@@ -69,7 +81,7 @@ export function Canvas({
         width={window.innerWidth}
         height={window.innerHeight}
         ref={canvasRef}
-        className="overflow-hidden"
+        className={`overflow-hidden ${cursorStyle}`}
       ></canvas>
       <div className="flex flex-col gap-4 fixed left-2 top-2 bg-gray-700 py-3 px-2 rounded">
         {Tools.map((tool) => (
@@ -78,6 +90,7 @@ export function Canvas({
             className={`${selectedTool === tool.tool ? "bg-blue-400 hover:bg-blue-400" : ""}`}
             onClick={() => {
               setSelectedTool(tool.tool);
+              setCursorStyle(tool.cursorStyle);
             }}
           >
             {tool.icon}
