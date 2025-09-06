@@ -81,7 +81,7 @@ export class Play {
   }
 
   clearCanvas() {
-    // Always reset transform before clearing/drawing
+    // reset transform before clearing/drawing
     this.ctx.setTransform(1, 0, 0, 1, 0, 0);
 
     // Clear background
@@ -97,7 +97,7 @@ export class Play {
     this.allShapes.map((dr) => {
       this.ctx.strokeStyle = "white";
       if (dr.type === "square") {
-        this.ctx.strokeRect(dr.startX, dr.startY, dr.height, dr.width);
+        this.ctx.strokeRect(dr.startX, dr.startY, dr.width, dr.height);
       } else if (dr.type === "circle") {
         this.ctx.beginPath();
         this.ctx.arc(dr.centerX, dr.centerY, dr.radius, 0, 2 * Math.PI);
@@ -231,8 +231,8 @@ export class Play {
         //?1.erase from the canvas
         const eraser: Eraser = {
           type: "eraser",
-          x: e.clientX,
-          y: e.clientY,
+          x: e.clientX - this.pan.x,
+          y: e.clientY - this.pan.y,
           radius: 10,
         };
         this.allShapes = this.allShapes.filter(
@@ -271,8 +271,8 @@ export class Play {
           type: "square",
           startX: this.startX - this.pan.x,
           startY: this.startY - this.pan.y,
-          height: e.clientX - this.startX,
-          width: e.clientY - this.startY,
+          width: e.clientX - this.startX,
+          height: e.clientY - this.startY,
         };
       } else if (this.selectedTool === "circle") {
         const radius: number =
@@ -378,20 +378,35 @@ export class Play {
       const rectW = Math.abs(shape.width);
       const rectH = Math.abs(shape.height);
 
-      // Check rect vs circle (eraser)
-      const closestX = Math.max(rectX, Math.min(eraser.x, rectX + rectW));
-      const closestY = Math.max(rectY, Math.min(eraser.y, rectY + rectH));
+      // Four edges
+      const edges: [number, number, number, number][] = [
+        [rectX, rectY, rectX + rectW, rectY], // top
+        [rectX + rectW, rectY, rectX + rectW, rectY + rectH], // right
+        [rectX + rectW, rectY + rectH, rectX, rectY + rectH], // bottom
+        [rectX, rectY + rectH, rectX, rectY], // left
+      ];
 
-      const dx = eraser.x - closestX;
-      const dy = eraser.y - closestY;
-      return dx * dx + dy * dy <= eraser.radius * eraser.radius;
+      return edges.some(([x1, y1, x2, y2]) =>
+        this.circleLineIntersect(
+          eraser.x,
+          eraser.y,
+          eraser.radius,
+          x1,
+          y1,
+          x2,
+          y2
+        )
+      );
     }
 
     if (shape.type === "circle") {
       const dx = eraser.x - shape.centerX;
       const dy = eraser.y - shape.centerY;
       const distance = Math.sqrt(dx * dx + dy * dy);
-      return distance <= eraser.radius + shape.radius;
+      return (
+        distance >= shape.radius - eraser.radius &&
+        distance <= shape.radius + eraser.radius
+      );
     }
 
     if (shape.type === "pencil") {
@@ -404,5 +419,29 @@ export class Play {
     }
 
     return false;
+  }
+  circleLineIntersect(
+    cx: number,
+    cy: number,
+    r: number,
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number
+  ): boolean {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const lenSq = dx * dx + dy * dy;
+    const t = Math.max(
+      0,
+      Math.min(1, ((cx - x1) * dx + (cy - y1) * dy) / lenSq)
+    );
+
+    const closestX = x1 + t * dx;
+    const closestY = y1 + t * dy;
+
+    const distX = cx - closestX;
+    const distY = cy - closestY;
+    return distX * distX + distY * distY <= r * r;
   }
 }
