@@ -14,13 +14,15 @@ import cookieParser from "cookie-parser";
 
 const app = express();
 const corsOptions: CorsOptions = {
-  origin: ["http://localhost:3000"],
+  origin: "http://localhost:3000",
   credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 };
 
+app.use(cookieParser());
 app.use(express.json());
 app.use(cors(corsOptions));
-app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (req, res) => {
@@ -115,8 +117,9 @@ app.post("/signin", async (req, res) => {
       const token = jwt.sign({ userId: isUserExist.id }, JWT_SECRET);
 
       const cookieOptions: CookieOptions = {
-        secure: false,
+        secure: true,
         httpOnly: false,
+        sameSite: "none",
       };
 
       return res
@@ -139,6 +142,19 @@ app.post("/signin", async (req, res) => {
     }
   }
 });
+app.get("/logout", async (req, res) => {
+  const cookieOptions: CookieOptions = {
+    secure: true,
+    httpOnly: false,
+    sameSite: "none",
+  };
+
+  return res.status(200).clearCookie("token", cookieOptions).json({
+    status: 200,
+    success: true,
+    message: "Logout success",
+  });
+});
 
 app.post("/create-room", isAuthenticated, async (req, res) => {
   try {
@@ -156,7 +172,7 @@ app.post("/create-room", isAuthenticated, async (req, res) => {
       });
 
       if (isSlugExist) {
-        return res.status(400).json({ message: "room slug already exist" });
+        return res.status(400).json({ message: "Room name already exist" });
       }
 
       const createdRoom = await prisma.room.create({
@@ -201,7 +217,7 @@ app.get("/chats/:roomId", isAuthenticated, async (req, res) => {
 app.get("/roomId/:slug", isAuthenticated, async (req, res) => {
   try {
     const slug = req.params.slug;
-
+    console.log("slug", slug);
     if (!slug) {
       return res.status(400).json({ message: "Slug is required" });
     }

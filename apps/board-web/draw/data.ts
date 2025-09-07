@@ -1,9 +1,10 @@
 import axios from "axios";
 import { HTTP_URL } from "@/config";
+import apiClient from "@/api/apiClient";
 
 export async function getExistingShapes(roomId: string) {
   try {
-    const response = await axios.get(`${HTTP_URL}/chats/${roomId}`);
+    const response = await apiClient.get(`/chats/${roomId}`);
     const chats = response.data.chats;
 
     const parsedData = chats.map((chat: { message: string }) => {

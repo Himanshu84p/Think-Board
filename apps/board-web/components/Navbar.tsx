@@ -1,30 +1,54 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Zap } from "lucide-react";
+import Link from "next/link";
+import { Skeleton } from "./ui/skeleton";
+import apiClient from "@/api/apiClient";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLoggedIn, setIsloggedIn] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem("userId");
+    console.log("token in navbar", token);
+    if (token) {
+      setIsloggedIn(true);
+    }
+    setLoading(false);
+  }, [isLoggedIn]);
+
+  const handleLogout = async () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("userId");
+    const response = await apiClient.get("/logout");
+    console.log(response);
+    if (response.status) {
+      setIsloggedIn(false);
+    }
+  };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 backdrop-glass border-b border-white/20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <nav className="fixed top-5 left-5 right-5 z-50 backdrop-glass bg-transparent">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 backdrop-blur-xl border-black/20 border-2 rounded-2xl shadow-xs">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center space-x-2">
             <div className="flex items-center justify-center w-10 h-10 bg-cta-gradient rounded-xl shadow-soft">
               <Zap className="w-6 h-6 text-white" />
             </div>
-            <span className="text-xl font-bold text-gradient">Think-Board</span>
+            <span className="text-xl text-primary font-bold">ThinkBoard</span>
           </div>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
             <a
-              href="#product"
+              href="#home"
               className="text-foreground hover:text-primary transition-colors"
             >
-              Product
+              Home
             </a>
             <a
               href="#features"
@@ -33,27 +57,28 @@ const Navbar = () => {
               Features
             </a>
             <a
-              href="#pricing"
+              href="#process"
               className="text-foreground hover:text-primary transition-colors"
             >
               Pricing
-            </a>
-            <a
-              href="#how-it-works"
-              className="text-foreground hover:text-primary transition-colors"
-            >
-              How it Works
             </a>
           </div>
 
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="ghost-primary" size="sm">
-              Sign In
-            </Button>
-            <Button variant="hero" size="sm">
-              Start Free
-            </Button>
+            {loading ? (
+              <Skeleton className="h-8 w-[70px]" />
+            ) : isLoggedIn ? (
+              <Button variant="hero" size="sm" onClick={() => handleLogout()}>
+                Logout
+              </Button>
+            ) : (
+              <Link href={"/auth/signin"}>
+                <Button variant="hero" size="sm">
+                  Sign in
+                </Button>
+              </Link>
+            )}
           </div>
 
           {/* Mobile menu button */}

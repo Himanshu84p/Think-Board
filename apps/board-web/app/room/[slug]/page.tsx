@@ -1,11 +1,20 @@
+import apiClient from "@/api/apiClient";
 import { RoomCanvas } from "@/components/RoomCanvas";
-import { HTTP_URL } from "@/config";
-import axios from "axios";
+import { cookies } from "next/headers";
 
 async function getRoomId(slug: string) {
-  const response = await axios.get(`${HTTP_URL}/roomId/${slug}`);
-  // console.log("response", response);
-  return response.data.roomId;
+  try {
+    const cookieStore = cookies();
+    const cookieHeader = (await cookieStore).toString();
+    // console.log(slug);
+    const response = await apiClient.get(`/roomId/${slug}`, {
+      headers: { Cookie: cookieHeader },
+    });
+    // console.log("response", response);
+    return response.data.roomId;
+  } catch (error) {
+    console.log("error in getting room id", error);
+  }
 }
 
 export default async function PrivateRoom({
@@ -14,6 +23,7 @@ export default async function PrivateRoom({
   params: Promise<{ slug: string }>;
 }) {
   const slug = (await params).slug;
+  // console.log("slug", slug);
   const roomId = await getRoomId(slug);
 
   return <RoomCanvas roomId={roomId} />;

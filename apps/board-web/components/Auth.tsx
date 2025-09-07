@@ -1,7 +1,6 @@
 "use client";
 
-import { HTTP_URL } from "@/config";
-import axios, { AxiosError } from "axios";
+import { AxiosError } from "axios";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -19,6 +18,7 @@ import { Input } from "./ui/input";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2Icon } from "lucide-react";
+import apiClient from "@/api/apiClient";
 
 export function Auth({ signIn }: { signIn: boolean }) {
   const [email, setEmail] = useState<string>("");
@@ -35,13 +35,11 @@ export function Auth({ signIn }: { signIn: boolean }) {
 
   async function handleSubmit() {
     try {
-      const submitUrl = signIn ? `${HTTP_URL}/signin` : `${HTTP_URL}/signup`;
+      const submitUrl = signIn ? `/signin` : `/signup`;
       if (signIn) {
         setLoading(true);
         const formData = { email, password };
-        const response = await axios.post(submitUrl, formData, {
-          withCredentials: true,
-        });
+        const response = await apiClient.post(submitUrl, formData);
 
         if (response.status) {
           const userId = response.data.data.userId;
@@ -50,14 +48,12 @@ export function Auth({ signIn }: { signIn: boolean }) {
           toast.success("Signed in successfully");
           clearControls();
           setLoading(false);
-          router.push("/");
+          router.push("/home");
           return;
         }
       } else {
         const formData = { name, email, password };
-        const response = await axios.post(submitUrl, formData, {
-          withCredentials: true,
-        });
+        const response = await apiClient.post(submitUrl, formData);
 
         if (response.status) {
           toast.success(

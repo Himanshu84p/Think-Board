@@ -7,13 +7,22 @@ export function isAuthenticated(
   res: Response,
   next: NextFunction
 ) {
-  const token = req.headers["authorization"] || "";
+  try {
+    const token = req.headers["authorization"] || req.cookies.token;
+    if (!token) {
+      res
+        .status(400)
+        .json({ status: 400, message: "Invalid token", success: false });
+    }
+    // console.log("cookiess jwt ", req.cookies);
+    const decoded = jwt.verify(token, JWT_SECRET);
 
-  const decoded = jwt.verify(token, JWT_SECRET);
-
-  if (decoded && (decoded as JwtPayload).userId) {
-    next();
-  } else {
-    res.status(403).json({ message: "Unauthorized!!" });
+    if (decoded && (decoded as JwtPayload).userId) {
+      next();
+    } else {
+      res.status(403).json({ message: "Unauthorized!!" });
+    }
+  } catch (error) {
+    console.log("error in middleware", error);
   }
 }
