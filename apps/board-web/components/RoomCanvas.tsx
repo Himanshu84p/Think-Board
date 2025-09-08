@@ -23,7 +23,8 @@ export function RoomCanvas({ roomId }: { roomId: string }) {
 
     return () => {
       console.log("leaving room", loading);
-      if (socket.readyState === WebSocket.OPEN) {
+      if (socket) {
+        console.log("user disconnected");
         socket.send(JSON.stringify({ type: "leave_room", roomId }));
       }
     };
