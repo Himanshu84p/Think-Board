@@ -1,8 +1,12 @@
 import apiClient from "@/api/apiClient";
 import { RoomCanvas } from "@/components/RoomCanvas";
+import { AxiosError } from "axios";
 import { cookies } from "next/headers";
+// import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 async function getRoomId(slug: string) {
+  // const router = useRouter();
   try {
     const cookieStore = cookies();
     const cookieHeader = (await cookieStore).toString();
@@ -13,6 +17,13 @@ async function getRoomId(slug: string) {
     // console.log("response", response);
     return response.data.roomId;
   } catch (error) {
+    if (error instanceof AxiosError) {
+      const errorMessage: string = error.response?.data.message;
+      console.log("error message", errorMessage);
+      // toast.error(errorMessage);
+      // router.push("/room/create");
+      return;
+    }
     console.log("error in getting room id", error);
   }
 }

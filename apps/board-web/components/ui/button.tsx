@@ -22,7 +22,7 @@ const buttonVariants = cva(
         link: "text-primary cursor-pointer",
         "ghost-primary":
           "text-primary hover:bg-primary-light hover:text-foreground border-foreground/20 border-1 transition-all duration-300",
-        hero: "bg-gradient-to-r from-primary to-secondary text-white font-semibold shadow-soft hover:shadow-glow hover:scale-105 transition-all duration-300",
+        hero: "bg-gradient-to-r from-primary to-secondary text-white shadow-soft hover:shadow-glow hover:scale-105 transition-all duration-300",
         "outline-light":
           "border-2 border-white/30 text-white bg-white/10 hover:bg-white/20 backdrop-blur-sm",
         feature:

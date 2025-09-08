@@ -67,11 +67,24 @@ export function CreateRoom() {
   const handleJoinRoom = async () => {
     try {
       setLoading(true);
-      router.push(`/room/${joinRoomSlug}`);
-      setLoading(false);
+      const response = await apiClient.get(`/roomId/${joinRoomSlug}`);
+
+      if (response.status) {
+        router.push(`/room/${joinRoomSlug}`);
+        toast.success(`You have joined ${joinRoomSlug}`);
+        setLoading(false);
+      } else {
+        setLoading(false);
+        toast.error("Something went wrong");
+      }
     } catch (error) {
-      console.log("error while joining room", error);
-      toast.error("Something went wrong");
+      if (error instanceof AxiosError) {
+        const msg: string = error.response?.data.message;
+        toast.error(msg);
+      } else {
+        console.log("error while joining room", error);
+        toast.error("Something went wrong");
+      }
       setLoading(false);
     }
   };
@@ -96,8 +109,8 @@ export function CreateRoom() {
       >
         <Button
           variant="ghost"
-          onClick={() => router.push("/")}
-          className="group flex items-center gap-2 hover:bg-background/50"
+          onClick={() => router.push("/home")}
+          className="group flex items-center gap-2 hover:bg-background/50 hover:text-primary hover:cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
           Back to Home

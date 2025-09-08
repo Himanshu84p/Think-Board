@@ -119,7 +119,7 @@ const Process = () => {
           className="mt-32 text-center"
         >
           <div className="relative group cursor-pointer">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-secondary/20 to-accent/20 rounded-3xl blur-2xl group-hover:blur-3xl transition-all duration-500" />
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/40 to-secondary/50 rounded-3xl group-hover:blur-xl transition-all duration-500" />
             <div className="relative bg-background/50 backdrop-blur-md rounded-3xl p-12 border border-secondary/10">
               <div className="max-w-3xl mx-auto space-y-8">
                 <h3 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
@@ -131,16 +131,9 @@ const Process = () => {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button
-                    variant="default"
-                    size="lg"
-                    className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity text-white font-medium px-8"
-                  >
-                    Start Free Trial
-                  </Button>
-                  <Button
                     variant="outline"
                     size="lg"
-                    className="border-secondary/20 hover:bg-secondary/10 transition-colors"
+                    className="border-secondary/20 hover:bg-primary/70 transition-colors"
                   >
                     Book a Demo
                   </Button>

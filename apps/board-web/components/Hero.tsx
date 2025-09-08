@@ -8,7 +8,7 @@ const Hero = () => {
   return (
     <section
       id="home"
-      className="min-h-screen flex items-center justify-center overflow-hidden dark:bg-background bg-background pt-16 "
+      className="min-h-screen flex items-center justify-center overflow-hidden dark:bg-background pt-16 lg:pt-0 bg-white [background:radial-gradient(30%_100%_at_-10%_50%,var(--secondary)_10%,var(--background)_100%)]"
     >
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
@@ -104,13 +104,6 @@ const Hero = () => {
                     <Play className="w-5 h-5 ml-2" />
                   </Button>
                 </Link>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="text-lg px-8 py-4"
-                >
-                  Watch Demo
-                </Button>
               </div>
             </motion.div>
             {/* 
@@ -132,33 +125,39 @@ const Hero = () => {
 
           {/* Right Column - Visual Demo */}
           <div className="relative">
-            <div className="relative group">
-              <div className="absolute inset-0 bg-cta-gradient rounded-3xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity duration-500"></div>
-              <div className="relative bg-background/60 backdrop-blur-sm rounded-3xl p-4 shadow-card animate-float card shadow-2xl">
-                <img
-                  src="/hero_board.png"
-                  alt="Think-Board collaborative whiteboard interface showing real-time collaboration with multiple users, sticky notes, and drawing tools"
-                  className="w-full h-auto rounded-2xl shadow-soft"
-                />
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+            >
+              <div className="relative group">
+                <div className="absolute inset-0 bg-cta-gradient rounded-3xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity duration-500"></div>
+                <div className="relative bg-background/60 backdrop-blur-sm rounded-3xl p-4 shadow-card animate-float card shadow-2xl">
+                  <img
+                    src="/hero_board.png"
+                    alt="Think-Board collaborative whiteboard interface showing real-time collaboration with multiple users, sticky notes, and drawing tools"
+                    className="w-full h-auto rounded-2xl shadow-soft"
+                  />
 
-                {/* Floating collaboration indicators */}
-                <div className="absolute -top-2 -left-2 bg-foreground rounded-full p-3 shadow-md animate-float">
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                </div>
-                <div
-                  className="absolute -top-2 -right-2 bg-foreground rounded-full p-3 shadow-md animate-float"
-                  style={{ animationDelay: "-1s" }}
-                >
-                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                </div>
-                <div
-                  className="absolute -bottom-2 -left-2 bg-foreground rounded-full p-3 shadow-md animate-float"
-                  style={{ animationDelay: "-2s" }}
-                >
-                  <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                  {/* Floating collaboration indicators */}
+                  <div className="absolute -top-2 -left-2 bg-foreground rounded-full p-3 shadow-md animate-float">
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  </div>
+                  <div
+                    className="absolute -top-2 -right-2 bg-foreground rounded-full p-3 shadow-md animate-float"
+                    style={{ animationDelay: "-1s" }}
+                  >
+                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                  </div>
+                  <div
+                    className="absolute -bottom-2 -left-2 bg-foreground rounded-full p-3 shadow-md animate-float"
+                    style={{ animationDelay: "-2s" }}
+                  >
+                    <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                  </div>
                 </div>
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
       </div>

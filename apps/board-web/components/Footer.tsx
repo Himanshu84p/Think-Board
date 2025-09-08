@@ -145,17 +145,6 @@ const Footer = () => {
           </div>
         </div>
       </div>
-
-      {/* Floating CTA Button */}
-      <div className="fixed bottom-6 right-6 z-50">
-        <Button
-          variant="hero"
-          size="lg"
-          className="rounded-full shadow-glow animate-glow hidden md:flex"
-        >
-          Start Free
-        </Button>
-      </div>
     </footer>
   );
 };

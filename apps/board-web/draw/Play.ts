@@ -4,18 +4,18 @@ import { parse } from "path";
 
 type Shape =
   | {
-      type: "square";
-      startX: number;
-      startY: number;
-      height: number;
-      width: number;
-    }
+    type: "square";
+    startX: number;
+    startY: number;
+    height: number;
+    width: number;
+  }
   | {
-      type: "circle";
-      centerX: number;
-      centerY: number;
-      radius: number;
-    }
+    type: "circle";
+    centerX: number;
+    centerY: number;
+    radius: number;
+  }
   | PencilStroke
   | Eraser;
 
@@ -73,7 +73,12 @@ export class Play {
   }
 
   async initPlay() {
-    this.allShapes = await getExistingShapes(this.roomId);
+    const shapes = await getExistingShapes(this.roomId);
+    if (shapes) {
+      this.allShapes = shapes
+    } else {
+      this.allShapes = [];
+    }
     this.clearCanvas();
   }
 

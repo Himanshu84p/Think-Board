@@ -37,9 +37,9 @@ const Navbar = () => {
           {/* Logo */}
           <div className="flex items-center space-x-2">
             <div className="flex items-center justify-center w-10 h-10 bg-cta-gradient rounded-xl shadow-soft">
-              <Zap className="w-6 h-6 text-white" />
+              <img src="/logo.png" />
             </div>
-            <span className="text-xl text-primary font-bold">ThinkBoard</span>
+            <span className="text-xl text-primary font-bold"></span>
           </div>
 
           {/* Desktop Navigation */}
@@ -60,7 +60,7 @@ const Navbar = () => {
               href="#process"
               className="text-foreground hover:text-primary transition-colors"
             >
-              Pricing
+              Process
             </a>
           </div>
 
@@ -102,11 +102,11 @@ const Navbar = () => {
           <div className="md:hidden py-4 border-t border-white/20 backdrop-glass">
             <div className="flex flex-col space-y-4">
               <a
-                href="#product"
+                href="#home"
                 className="text-foreground hover:text-primary transition-colors px-2 py-1"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Product
+                Home
               </a>
               <a
                 href="#features"
@@ -116,26 +116,30 @@ const Navbar = () => {
                 Features
               </a>
               <a
-                href="#pricing"
+                href="#process"
                 className="text-foreground hover:text-primary transition-colors px-2 py-1"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Pricing
-              </a>
-              <a
-                href="#how-it-works"
-                className="text-foreground hover:text-primary transition-colors px-2 py-1"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                How it Works
+                Process
               </a>
               <div className="flex flex-col space-y-2 pt-4">
-                <Button variant="ghost-primary" size="sm">
-                  Sign In
-                </Button>
-                <Button variant="hero" size="sm">
-                  Start Free
-                </Button>
+                {loading ? (
+                  <Skeleton className="h-8 w-full" />
+                ) : isLoggedIn ? (
+                  <Button
+                    variant="ghost-primary"
+                    size="sm"
+                    onClick={() => handleLogout()}
+                  >
+                    Logout
+                  </Button>
+                ) : (
+                  <Link href={"/auth/signin"}>
+                    <Button variant="hero" size="sm" className="w-full">
+                      Sign in
+                    </Button>
+                  </Link>
+                )}
               </div>
             </div>
           </div>
