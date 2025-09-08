@@ -122,43 +122,43 @@ wss.on("connection", function (socket, request) {
 
       if (message) {
         try {
-          const erasedShape = await prisma.chat.findFirst({
+          // const erasedShape = await prisma.chat.findFirst({
+          //   where: {
+          //     message: message,
+          //   },
+          // });
+          // // console.log("shape found", erasedShape);
+          // if (erasedShape) {
+          const deletedShape = await prisma.chat.deleteMany({
             where: {
               message: message,
+              roomId: roomId,
             },
           });
-          // console.log("shape found", erasedShape);
-          if (erasedShape) {
-            const deletedShape = await prisma.chat.delete({
-              where: {
-                id: erasedShape.id,
-              },
-            });
-            // console.log("deleted shape", deletedShape);
+          // console.log("deleted shape", deletedShape);
 
-            users.forEach(async (u) => {
-              if (u.rooms.includes(roomId)) {
-                const parsedMsg = JSON.stringify({
-                  type: "erase",
-                  message: message,
-                  roomId: roomId,
-                });
-                u.ws.send(parsedMsg);
-              }
-            });
-          }
+          users.forEach(async (u) => {
+            if (u.rooms.includes(roomId)) {
+              const parsedMsg = JSON.stringify({
+                type: "erase",
+                message: message,
+                roomId: roomId,
+              });
+              u.ws.send(parsedMsg);
+            }
+          });
+          // }
         } catch (error) {
           console.log("error while erasing", error);
         }
       }
     }
-
-    socket.on("close", function (data) {
-      const idx = users.findIndex((x) => x.ws === socket);
-      if (idx != -1) {
-        users.splice(idx, 1);
-      }
-      // console.log("user disconnected");
-    });
+  });
+  socket.on("close", function (data) {
+    const idx = users.findIndex((x) => x.ws === socket);
+    if (idx != -1) {
+      users.splice(idx, 1);
+    }
+    // console.log("user disconnected");
   });
 });
