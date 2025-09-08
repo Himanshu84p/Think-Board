@@ -10,7 +10,7 @@ const Process = () => {
       icon: UserPlus,
       title: "Join & Invite",
       description:
-        "Create your board in seconds and invite team members with a simple link. No complex setup required.",
+        "Create your board in seconds and invite team members with a simple room name. No complex setup required.",
       highlight: "Instant Setup",
       color: "from-blue-500/20 to-purple-500/20",
     },
@@ -18,15 +18,14 @@ const Process = () => {
       number: "02",
       icon: Lightbulb,
       title: "Create & Brainstorm",
-      description:
-        "Use our intuitive tools to sketch ideas, add sticky notes, and build mind maps together in real-time.",
+      description: "Use our intuitive tools to sketch ideas in real-time.",
       highlight: "Real-time Magic",
       color: "from-emerald-500/20 to-teal-500/20",
     },
   ];
 
   return (
-    <section id="process" className="relative py-32 overflow-hidden">
+    <section id="process" className="relative py-26 overflow-hidden">
       {/* Background Elements */}
       <div className="absolute inset-0 bg-gradient-to-b from-background via-secondary/5 to-background" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_500px_at_50%_200px,theme(colors.secondary.DEFAULT/0.15),transparent)]" />
@@ -41,12 +40,12 @@ const Process = () => {
         >
           <Badge
             variant="outline"
-            className="mb-6 py-2 px-4 bg-secondary/10 backdrop-blur-sm border-secondary/20 text-secondary-foreground"
+            className="bg-white/20 border-primary/30 text-primary font-medium"
           >
             <Share2 className="w-4 h-4 mr-2 animate-pulse" />
             The Process
           </Badge>
-          <h2 className="text-5xl sm:text-6xl font-bold mb-8 tracking-tight">
+          <h2 className="text-5xl sm:text-6xl font-bold my-8 tracking-wide">
             Start collaborating in
             <span className="block mt-2 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               three simple steps
