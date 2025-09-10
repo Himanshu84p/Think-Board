@@ -5,7 +5,9 @@ import {
   Circle,
   Eraser,
   Hand,
+  Minus,
   Pencil,
+  Plus,
   Square,
 } from "lucide-react";
 import { Button } from "./ui/button";
@@ -28,6 +30,8 @@ export function Canvas({
   const [play, setPlay] = useState<Play>();
   const [cursorStyle, setCursorStyle] = useState<string>("cursor-grab");
   const router = useRouter();
+  const [userId, setUserId] = useState<string>("");
+  const [zoomValue, setZoomValue] = useState<number>(1); //1 for 100%
 
   const Tools: {
     name: string;
@@ -73,7 +77,7 @@ export function Canvas({
 
   useEffect(() => {
     if (canvasRef.current) {
-      const userId = localStorage.getItem("userId")!;
+      setUserId((u) => localStorage.getItem("userId")!);
       // console.log("userId", userId);
       const play = new Play(canvasRef.current, socket, roomId, userId);
       setPlay(play);
@@ -86,6 +90,33 @@ export function Canvas({
     }
   }, [canvasRef]);
 
+  function zoomIn() {
+    if (canvasRef.current) {
+      if (zoomValue < 2) {
+        play?.zoom(
+          parseFloat(zoomValue.toFixed(3)) + parseFloat((0.1).toFixed(3))
+        );
+        setZoomValue(
+          (z) => parseFloat(z.toFixed(3)) + parseFloat((0.1).toFixed(3))
+        );
+        console.log("zooming innnn...", zoomValue);
+      }
+    }
+  }
+
+  function zoomOut() {
+    if (canvasRef.current) {
+      if (zoomValue > 0.2) {
+        play?.zoom(
+          parseFloat(zoomValue.toFixed(3)) - parseFloat((0.1).toFixed(3))
+        );
+        setZoomValue(
+          (z) => parseFloat(z.toFixed(3)) - parseFloat((0.1).toFixed(3))
+        );
+        console.log("zooming innnn...", zoomValue);
+      }
+    }
+  }
   return (
     <>
       <canvas
@@ -94,7 +125,6 @@ export function Canvas({
         ref={canvasRef}
         className={`overflow-hidden ${cursorStyle}`}
       />
-
       {/* Updated Toolbar */}
       <motion.div
         initial={{ y: -20, opacity: 0 }}
@@ -128,7 +158,6 @@ export function Canvas({
           </div>
         ))}
       </motion.div>
-
       {/* Back Button */}
       <motion.div
         initial={{ x: -20, opacity: 0 }}
@@ -145,6 +174,39 @@ export function Canvas({
         >
           <ArrowLeftFromLine className="w-4 h-4" />
           <span className="sr-only">Back to Rooms</span>
+        </Button>
+      </motion.div>
+
+      {/* Zoom Controls */}
+      <motion.div
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="fixed bottom-4 right-4 flex items-center gap-1 p-1 rounded-lg bg-background/95 backdrop-blur-sm border border-border/40 shadow-lg"
+      >
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={zoomOut}
+          disabled={zoomValue <= 0.2}
+          className="h-8 w-8 p-0 hover:bg-transparent hover:text-foreground active:text-background active:bg-foreground"
+        >
+          <Minus className="h-4 w-4" />
+          <span className="sr-only">Zoom Out</span>
+        </Button>
+
+        <div className="flex items-center justify-center min-w-[64px] px-2 text-sm font-medium">
+          {Math.round(zoomValue * 100)}%
+        </div>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={zoomIn}
+          disabled={zoomValue >= 2}
+          className="h-8 w-8 p-0 hover:bg-transparent hover:text-foreground active:text-background active:bg-foreground"
+        >
+          <Plus className="h-4 w-4" />
+          <span className="sr-only">Zoom In</span>
         </Button>
       </motion.div>
     </>

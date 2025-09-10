@@ -53,6 +53,7 @@ export class Play {
   };
   private pan: { x: number; y: number };
   private userId: string;
+  private scale: number = 1; // Initialize scale to 1
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -72,6 +73,22 @@ export class Play {
     this.userId = userId;
   }
 
+  private toModelCoords(clientX: number, clientY: number) {
+    // Convert screen coordinates to model coordinates
+    return {
+      x: (clientX - this.pan.x) / this.scale,
+      y: (clientY - this.pan.y) / this.scale,
+    };
+  }
+
+  private toScreenCoords(modelX: number, modelY: number) {
+    // Convert model coordinates to screen coordinates
+    return {
+      x: modelX * this.scale + this.pan.x,
+      y: modelY * this.scale + this.pan.y,
+    };
+  }
+
   async initPlay() {
     const shapes = await getExistingShapes(this.roomId);
     if (shapes) {
@@ -82,6 +99,10 @@ export class Play {
     this.clearCanvas();
   }
 
+  zoom(zoomValue: number) {
+    this.scale = zoomValue;
+    this.clearCanvas();
+  }
   destroyHandlers() {
     this.removeMouseEventHandlers();
   }
@@ -94,12 +115,15 @@ export class Play {
     this.ctx.fillStyle = "rgb(32 35 42)";
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // Apply pan transform for drawing shapes
-    this.ctx.save();
-    // console.log("pan", this.pan);
-    this.ctx.translate(this.pan.x, this.pan.y);
+    //removed translate function and added panning and zooming in single method
+
+    this.ctx.setTransform(this.scale, 0, 0, this.scale, this.pan.x, this.pan.y);
 
     // Draw existing elements with current pan
+    this.drawShapes();
+  }
+
+  drawShapes() {
     this.allShapes.map((dr) => {
       this.ctx.strokeStyle = "white";
       if (dr.type === "square") {
@@ -119,8 +143,6 @@ export class Play {
         });
       }
     });
-
-    this.ctx.restore();
   }
 
   setToolBar(selectedTool: Tool) {
@@ -162,8 +184,9 @@ export class Play {
     // console.log("1 mouse down event", this.startX, this.startY);
 
     this.clearCanvas();
-    this.startX = e.clientX;
-    this.startY = e.clientY;
+    const coords = this.toModelCoords(e.clientX, e.clientY);
+    this.startX = coords.x;
+    this.startY = coords.y;
     this.clicked = true;
     // console.log(" 2 mouse down event", this.startX, this.startY);
     if (this.selectedTool === "pencil") {
@@ -172,11 +195,11 @@ export class Play {
       this.ctx.beginPath();
       this.ctx.moveTo(this.startX, this.startY);
       // console.log(this.pencilStroke);
-      [this.lastX, this.lastY] = [e.clientX, e.clientY];
+      [this.lastX, this.lastY] = [coords.x, coords.y];
       this.pencilStroke = {
         type: "pencil",
-        startX: e.clientX,
-        startY: e.clientY,
+        startX: coords.x,
+        startY: coords.y,
         strokes: [],
       };
     }
@@ -184,6 +207,7 @@ export class Play {
 
   mouseMoveHandler = (e: MouseEvent) => {
     if (this.clicked) {
+      const coords = this.toModelCoords(e.clientX, e.clientY);
       // console.log("mouse move event", this.selectedTool);
       if (this.selectedTool != "pencil") {
         this.clearCanvas();
@@ -193,19 +217,19 @@ export class Play {
         this.ctx.strokeRect(
           this.startX,
           this.startY,
-          e.clientX - this.startX,
-          e.clientY - this.startY
+          coords.x - this.startX,
+          coords.y - this.startY
         );
       } else if (this.selectedTool === "circle") {
         const radius =
           Math.max(
-            Math.abs(e.clientX - this.startX),
-            Math.abs(e.clientY - this.startY)
+            Math.abs(coords.x - this.startX),
+            Math.abs(coords.y - this.startY)
           ) / 2;
         this.ctx.beginPath();
         this.ctx.arc(
-          (this.startX + e.clientX) / 2,
-          (this.startY + e.clientY) / 2,
+          (this.startX + coords.x) / 2,
+          (this.startY + coords.y) / 2,
           radius,
           0,
           2 * Math.PI
@@ -219,17 +243,17 @@ export class Play {
         this.pencilStroke.strokes.push({ x: this.lastX, y: this.lastY });
         this.ctx.strokeStyle = "white";
         this.ctx.stroke();
-        this.lastX = e.offsetX;
-        this.lastY = e.offsetY;
+        this.lastX = coords.x;
+        this.lastY = coords.y;
       } else if (this.selectedTool === "drag") {
         // Incremental pan by delta from last event
-        const dx = e.clientX - this.startX;
-        const dy = e.clientY - this.startY;
+        const dx = e.clientX - this.startX * this.scale - this.pan.x;
+        const dy = e.clientY - this.startY * this.scale - this.pan.y;
         this.pan.x += dx;
         this.pan.y += dy;
         // Update starting point for next move
-        this.startX = e.clientX;
-        this.startY = e.clientY;
+        // this.startX = e.clientX;
+        // this.startY = e.clientY;
         // Redraw with new pan applied in clearCanvas()
         this.clearCanvas();
       } else if (this.selectedTool === "eraser") {
@@ -244,8 +268,8 @@ export class Play {
         //?1.erase from the canvas
         const eraser: Eraser = {
           type: "eraser",
-          x: e.clientX - this.pan.x,
-          y: e.clientY - this.pan.y,
+          x: coords.x,
+          y: coords.y,
           radius: 10,
         };
         this.allShapes = this.allShapes.filter(
@@ -259,6 +283,7 @@ export class Play {
   mouseUpHandler = (e: MouseEvent) => {
     // console.log("mouse up event ", this.selectedTool);
     if (this.clicked) {
+      const coords = this.toModelCoords(e.clientX, e.clientY);
       this.clearCanvas();
       let currDraw: Shape | null = null;
 
@@ -267,8 +292,8 @@ export class Play {
         this.ctx.strokeRect(
           this.startX,
           this.startY,
-          e.clientX - this.startX,
-          e.clientY - this.startY
+          coords.x - this.startX,
+          coords.y - this.startY
         );
 
         // console.log(
@@ -282,21 +307,21 @@ export class Play {
         //set currdraw as per panning coordinates after translate
         currDraw = {
           type: "square",
-          startX: this.startX - this.pan.x,
-          startY: this.startY - this.pan.y,
-          width: e.clientX - this.startX,
-          height: e.clientY - this.startY,
+          startX: this.startX,
+          startY: this.startY,
+          width: coords.x - this.startX,
+          height: coords.y - this.startY,
         };
       } else if (this.selectedTool === "circle") {
         const radius: number =
           Math.max(
-            Math.abs(e.clientX - this.startX),
-            Math.abs(e.clientY - this.startY)
+            Math.abs(coords.x - this.startX),
+            Math.abs(coords.y - this.startY)
           ) / 2;
         this.ctx.beginPath();
         this.ctx.arc(
-          (this.startX + e.clientX) / 2,
-          (this.startY + e.clientY) / 2,
+          (this.startX + coords.x) / 2,
+          (this.startY + coords.y) / 2,
           radius,
           0,
           2 * Math.PI
@@ -305,10 +330,8 @@ export class Play {
         this.ctx.stroke();
         this.ctx.closePath();
 
-        const centerX =
-          (this.startX - this.pan.x + (e.clientX - this.pan.x)) / 2;
-        const centerY =
-          (this.startY - this.pan.y + (e.clientY - this.pan.y)) / 2;
+        const centerX = (this.startX + coords.x) / 2;
+        const centerY = (this.startY + coords.y) / 2;
         // console.log(
         //   "centerX, centerY, radius",
         //   centerX,
@@ -328,11 +351,11 @@ export class Play {
           radius: radius,
         };
       } else if (this.selectedTool === "pencil") {
-        this.pencilStroke.startX = this.startX - this.pan.x;
-        this.pencilStroke.startY = this.startY - this.pan.y;
+        this.pencilStroke.startX = this.startX;
+        this.pencilStroke.startY = this.startY;
         this.pencilStroke.strokes = this.pencilStroke.strokes.map((s) => ({
-          x: s.x - this.pan.x,
-          y: s.y - this.pan.y,
+          x: s.x,
+          y: s.y,
         }));
         currDraw = this.pencilStroke;
         this.pencilStroke = {
