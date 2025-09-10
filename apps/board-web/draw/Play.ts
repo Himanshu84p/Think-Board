@@ -4,18 +4,18 @@ import { parse } from "path";
 
 type Shape =
   | {
-    type: "square";
-    startX: number;
-    startY: number;
-    height: number;
-    width: number;
-  }
+      type: "square";
+      startX: number;
+      startY: number;
+      height: number;
+      width: number;
+    }
   | {
-    type: "circle";
-    centerX: number;
-    centerY: number;
-    radius: number;
-  }
+      type: "circle";
+      centerX: number;
+      centerY: number;
+      radius: number;
+    }
   | PencilStroke
   | Eraser;
 
@@ -75,7 +75,7 @@ export class Play {
   async initPlay() {
     const shapes = await getExistingShapes(this.roomId);
     if (shapes) {
-      this.allShapes = shapes
+      this.allShapes = shapes;
     } else {
       this.allShapes = [];
     }
@@ -433,22 +433,35 @@ export class Play {
     }
 
     if (shape.type === "pencil") {
-      // Check if eraser is close to any stroke point
-      const result = shape.strokes.some((pt) => {
-        const dx = eraser.x - pt.x;
-        const dy = eraser.y - pt.y;
-        return dx * dx + dy * dy <= eraser.radius * eraser.radius;
-      });
-      // console.log("pencil result", result);
-      if (result) {
-        const msg = JSON.stringify({
-          type: "erase",
-          message: JSON.stringify(shape),
-          roomId: this.roomId,
-        });
-        this.socket.send(msg);
+      // consider two point as one line
+      //enhanced logic firstly checks with each point, converted into line and then check
+      for (let i = 0; i < shape.strokes.length - 1; i++) {
+        const p1 = shape.strokes[i];
+        const p2 = shape.strokes[i + 1];
+
+        if (
+          p1 &&
+          p2 &&
+          this.circleLineIntersect(
+            eraser.x,
+            eraser.y,
+            eraser.radius,
+            p1?.x,
+            p1?.y,
+            p2?.x,
+            p2?.y,
+            shape
+          )
+        ) {
+          const msg = JSON.stringify({
+            type: "erase",
+            message: JSON.stringify(shape),
+            roomId: this.roomId,
+          });
+          this.socket.send(msg);
+          return true;
+        }
       }
-      return result;
     }
 
     return false;
