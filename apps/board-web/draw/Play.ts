@@ -4,18 +4,18 @@ import { parse } from "path";
 
 type Shape =
   | {
-      type: "square";
-      startX: number;
-      startY: number;
-      height: number;
-      width: number;
-    }
+    type: "square";
+    startX: number;
+    startY: number;
+    height: number;
+    width: number;
+  }
   | {
-      type: "circle";
-      centerX: number;
-      centerY: number;
-      radius: number;
-    }
+    type: "circle";
+    centerX: number;
+    centerY: number;
+    radius: number;
+  }
   | PencilStroke
   | Eraser;
 
@@ -108,6 +108,7 @@ export class Play {
   }
 
   clearCanvas() {
+    console.log("canvas cleared")
     // reset transform before clearing/drawing
     this.ctx.setTransform(1, 0, 0, 1, 0, 0);
 
@@ -284,7 +285,9 @@ export class Play {
     // console.log("mouse up event ", this.selectedTool);
     if (this.clicked) {
       const coords = this.toModelCoords(e.clientX, e.clientY);
-      this.clearCanvas();
+      if (this.selectedTool != "pencil") {
+        this.clearCanvas();
+      }
       let currDraw: Shape | null = null;
 
       this.ctx.strokeStyle = "white";

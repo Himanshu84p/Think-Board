@@ -87,7 +87,7 @@ wss.on("connection", function (socket, request) {
       if (message) {
         try {
           //find broadcast room to send message, then send it to the users which are connected to that room
-          const joinedUsers = users.filter((x) => x.rooms.includes(roomId));
+          const joinedUsers = users.filter((x) => x.rooms.includes(roomId) && x.ws != socket);
 
           //db call to store the chat
           //TODO: optimal approach would be to put message in queue so db call delay will not impact message delivery time
