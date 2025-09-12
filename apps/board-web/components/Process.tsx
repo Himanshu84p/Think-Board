@@ -1,9 +1,12 @@
+// "use client"
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, UserPlus, Lightbulb, Share2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 
 const Process = () => {
+  const router = useRouter();
   const steps = [
     {
       number: "01",
@@ -133,8 +136,11 @@ const Process = () => {
                     variant="outline"
                     size="lg"
                     className="border-secondary/20 hover:bg-primary/70 transition-colors"
+                    onClick={() => {
+                      router.push("/room/create");
+                    }}
                   >
-                    Book a Demo
+                    Start Drawing
                   </Button>
                 </div>
               </div>
