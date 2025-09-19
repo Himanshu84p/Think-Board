@@ -4,20 +4,21 @@ import { parse } from "path";
 
 type Shape =
   | {
-    type: "square";
-    startX: number;
-    startY: number;
-    height: number;
-    width: number;
-  }
+      type: "square";
+      startX: number;
+      startY: number;
+      height: number;
+      width: number;
+    }
   | {
-    type: "circle";
-    centerX: number;
-    centerY: number;
-    radius: number;
-  }
+      type: "circle";
+      centerX: number;
+      centerY: number;
+      radius: number;
+    }
   | PencilStroke
-  | Eraser;
+  | Eraser
+  | Line;
 
 type PencilStroke = {
   type: "pencil";
@@ -31,6 +32,14 @@ type Eraser = {
   x: number;
   y: number;
   radius: number;
+};
+
+type Line = {
+  type: "line";
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
 };
 
 export class Play {
@@ -108,7 +117,7 @@ export class Play {
   }
 
   clearCanvas() {
-    console.log("canvas cleared")
+    console.log("canvas cleared");
     // reset transform before clearing/drawing
     this.ctx.setTransform(1, 0, 0, 1, 0, 0);
 
@@ -142,6 +151,11 @@ export class Play {
           this.ctx.lineTo(s.x, s.y);
           this.ctx.stroke();
         });
+      } else if (dr.type === "line") {
+        this.ctx.beginPath();
+        this.ctx.moveTo(dr.startX, dr.startY);
+        this.ctx.lineTo(dr.endX, dr.endY);
+        this.ctx.stroke();
       }
     });
   }
@@ -203,6 +217,10 @@ export class Play {
         startY: coords.y,
         strokes: [],
       };
+    }
+    if (this.selectedTool === "line") {
+      // console.log("line ", this.startX, this.startY);
+      this.ctx.beginPath();
     }
   };
 
@@ -277,6 +295,10 @@ export class Play {
           (s) => !this.intersects(s, eraser)
         );
         //erase from the db
+      } else if (this.selectedTool === "line") {
+        this.ctx.moveTo(this.startX, this.startY);
+        this.ctx.lineTo(coords.x, coords.y);
+        this.ctx.stroke();
       }
     }
   };
@@ -367,6 +389,19 @@ export class Play {
           startY: this.lastY,
           strokes: [],
         };
+      } else if (this.selectedTool === "line") {
+        this.ctx.beginPath();
+        this.ctx.moveTo(this.startX, this.startY);
+        this.ctx.lineTo(coords.x, coords.y);
+        this.ctx.stroke();
+
+        currDraw = {
+          type: "line",
+          startX: this.startX,
+          startY: this.startY,
+          endX: coords.x,
+          endY: coords.y,
+        };
       }
       if (!currDraw) {
         this.clicked = false;
@@ -394,7 +429,7 @@ export class Play {
             userId: this.userId,
           })
         );
-      } else if (this.selectedTool === "pencil") {
+      } else if (this.selectedTool === "pencil" || "line") {
         this.socket.send(
           JSON.stringify({
             type: "chat",

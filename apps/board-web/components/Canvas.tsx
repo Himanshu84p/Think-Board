@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 
-export type Tool = "square" | "circle" | "pencil" | "drag" | "eraser";
+export type Tool = "square" | "circle" | "pencil" | "drag" | "eraser" | "line";
 
 export function Canvas({
   roomId,
@@ -68,6 +68,12 @@ export function Canvas({
       icon: <Eraser className="w-4 h-4" />,
       tool: "eraser",
       cursorStyle: "custom-cursor-eraser",
+    },
+    {
+      name: "Line",
+      icon: <Minus className="w-4 h-4" />,
+      tool: "line",
+      cursorStyle: "cursor-crosshair",
     },
   ];
 
