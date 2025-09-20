@@ -525,9 +525,35 @@ export class Play {
       }
     }
 
+    if (shape.type === "line") {
+      // consider two point as one line
+      //check that erase intersect that line or not       
+        if (
+          this.circleLineIntersect(
+            eraser.x,
+            eraser.y,
+            eraser.radius,
+            shape.startX,
+            shape.startY,
+            shape.endX,
+            shape.endY,
+            shape
+          )
+        ) {
+          const msg = JSON.stringify({
+            type: "erase",
+            message: JSON.stringify(shape),
+            roomId: this.roomId,
+          });
+          this.socket.send(msg);
+          return true;
+        }
+      
+    }
+
     return false;
   }
-  circleLineIntersect(
+    circleLineIntersect(
     cx: number,
     cy: number,
     r: number,
