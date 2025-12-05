@@ -34,7 +34,7 @@ app.post("/signup", async (req, res) => {
 
   if (error && error.issues && error.issues[0]?.message) {
     const errorMessage: string = error.issues[0]?.message;
-    console.log(error.issues);
+    console.log("error message ", errorMessage);
     return res.status(400).json({
       status: 400,
       success: false,
@@ -46,6 +46,19 @@ app.post("/signup", async (req, res) => {
   if (data) {
     const { name, email, password } = data;
 
+    const isEmailExist = await prisma.user.findFirst({
+      where: {
+        email,
+      },
+    });
+
+    if (isEmailExist) {
+      return res.status(400).json({
+        status: 400,
+        success: false,
+        message: "Email already registered! Use another one",
+      });
+    }
     const hasedPassword = await bcrypt.hash(password, 12);
 
     try {
@@ -110,7 +123,7 @@ app.post("/signin", async (req, res) => {
 
     const isPasswordCorrect = await bcrypt.compare(
       password,
-      isUserExist?.password || ""
+      isUserExist?.password || "",
     );
 
     if (isPasswordCorrect) {
@@ -229,7 +242,9 @@ app.get("/roomId/:slug", isAuthenticated, async (req, res) => {
     });
 
     if (!room) {
-      return res.status(404).json({ status: 404, message: "Room not found", success: false });
+      return res
+        .status(404)
+        .json({ status: 404, message: "Room not found", success: false });
     }
 
     return res

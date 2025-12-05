@@ -1,6 +1,5 @@
 import { Tool } from "@/components/Canvas";
 import { getExistingShapes } from "./data";
-import { parse } from "path";
 
 type Shape =
   | {
@@ -18,7 +17,8 @@ type Shape =
     }
   | PencilStroke
   | Eraser
-  | Line;
+  | Line
+  | Text;
 
 type PencilStroke = {
   type: "pencil";
@@ -42,6 +42,13 @@ type Line = {
   endY: number;
 };
 
+type Text = {
+  type: "text";
+  x: number;
+  y: number;
+  text: string;
+};
+
 export class Play {
   private canvas: HTMLCanvasElement;
   private socket: WebSocket;
@@ -50,7 +57,10 @@ export class Play {
   private allShapes: Shape[] = [];
   private startX: number = 0;
   private startY: number = 0;
+  private textX: number = 0;
+  private textY: number = 0;
   private clicked: boolean = false;
+  private dblClicked: boolean = false;
   private selectedTool: Tool = "drag";
   private lastX: number = 0;
   private lastY: number = 0;
@@ -63,12 +73,13 @@ export class Play {
   private pan: { x: number; y: number };
   private userId: string;
   private scale: number = 1; // Initialize scale to 1
+  private text: string = "";
 
   constructor(
     canvas: HTMLCanvasElement,
     socket: WebSocket,
     roomId: string,
-    userId: string
+    userId: string,
   ) {
     this.canvas = canvas;
     this.socket = socket;
@@ -80,6 +91,7 @@ export class Play {
     this.addMouseEventHandlers();
     this.pan = { x: 0, y: 0 };
     this.userId = userId;
+    this.text = "";
   }
 
   private toModelCoords(clientX: number, clientY: number) {
@@ -117,7 +129,7 @@ export class Play {
   }
 
   clearCanvas() {
-    console.log("canvas cleared");
+    //console.log("canvas cleared");
     // reset transform before clearing/drawing
     this.ctx.setTransform(1, 0, 0, 1, 0, 0);
 
@@ -156,6 +168,10 @@ export class Play {
         this.ctx.moveTo(dr.startX, dr.startY);
         this.ctx.lineTo(dr.endX, dr.endY);
         this.ctx.stroke();
+      } else if (dr.type === "text") {
+        this.ctx.font = "18px Arial";
+        this.ctx.fillStyle = "white";
+        this.ctx.fillText(dr.text, dr.x, dr.y);
       }
     });
   }
@@ -177,7 +193,7 @@ export class Play {
         const message: Shape = JSON.parse(parsedData.message);
         //stringified,bcz object reference is different although values is same
         this.allShapes = this.allShapes.filter(
-          (s) => JSON.stringify(s) != JSON.stringify(message)
+          (s) => JSON.stringify(s) != JSON.stringify(message),
         );
         this.clearCanvas();
       }
@@ -188,11 +204,15 @@ export class Play {
     this.canvas.addEventListener("mousedown", this.mouseDownHandler);
     this.canvas.addEventListener("mousemove", this.mouseMoveHandler);
     this.canvas.addEventListener("mouseup", this.mouseUpHandler);
+    this.canvas.addEventListener("keydown", this.keyDownHandler);
+    this.canvas.addEventListener("dblclick", this.mouseDblClickHandler);
   }
   removeMouseEventHandlers() {
     this.canvas.removeEventListener("mousedown", this.mouseDownHandler);
     this.canvas.removeEventListener("mousemove", this.mouseMoveHandler);
     this.canvas.removeEventListener("mouseup", this.mouseUpHandler);
+    this.canvas.removeEventListener("keydown", this.keyDownHandler);
+    this.canvas.removeEventListener("dblclick", this.mouseDblClickHandler);
   }
 
   mouseDownHandler = (e: MouseEvent) => {
@@ -221,6 +241,30 @@ export class Play {
     if (this.selectedTool === "line") {
       // console.log("line ", this.startX, this.startY);
       this.ctx.beginPath();
+    } else if (this.selectedTool === "text" && this.dblClicked === true) {
+      //console.log("last was double clicked");
+      let currDraw: Shape | null = null;
+
+      currDraw = {
+        type: "text",
+        x: this.textX,
+        y: this.textY,
+        text: this.text,
+      };
+
+      this.allShapes.push(currDraw);
+      this.dblClicked = false;
+      this.text = "";
+      this.clearCanvas();
+      const stringiDraw: string = JSON.stringify(currDraw);
+      this.socket.send(
+        JSON.stringify({
+          type: "chat",
+          roomId: this.roomId,
+          message: stringiDraw,
+          userId: this.userId,
+        }),
+      );
     }
   };
 
@@ -237,13 +281,13 @@ export class Play {
           this.startX,
           this.startY,
           coords.x - this.startX,
-          coords.y - this.startY
+          coords.y - this.startY,
         );
       } else if (this.selectedTool === "circle") {
         const radius =
           Math.max(
             Math.abs(coords.x - this.startX),
-            Math.abs(coords.y - this.startY)
+            Math.abs(coords.y - this.startY),
           ) / 2;
         this.ctx.beginPath();
         this.ctx.arc(
@@ -251,7 +295,7 @@ export class Play {
           (this.startY + coords.y) / 2,
           radius,
           0,
-          2 * Math.PI
+          2 * Math.PI,
         );
         this.ctx.strokeStyle = "#fff";
         this.ctx.stroke();
@@ -292,7 +336,7 @@ export class Play {
           radius: 10,
         };
         this.allShapes = this.allShapes.filter(
-          (s) => !this.intersects(s, eraser)
+          (s) => !this.intersects(s, eraser),
         );
         //erase from the db
       } else if (this.selectedTool === "line") {
@@ -304,7 +348,7 @@ export class Play {
   };
 
   mouseUpHandler = (e: MouseEvent) => {
-    // console.log("mouse up event ", this.selectedTool);
+    //console.log("mouse up event ", this.selectedTool, this.clicked);
     if (this.clicked) {
       const coords = this.toModelCoords(e.clientX, e.clientY);
       if (this.selectedTool != "pencil") {
@@ -318,7 +362,7 @@ export class Play {
           this.startX,
           this.startY,
           coords.x - this.startX,
-          coords.y - this.startY
+          coords.y - this.startY,
         );
 
         // console.log(
@@ -341,7 +385,7 @@ export class Play {
         const radius: number =
           Math.max(
             Math.abs(coords.x - this.startX),
-            Math.abs(coords.y - this.startY)
+            Math.abs(coords.y - this.startY),
           ) / 2;
         this.ctx.beginPath();
         this.ctx.arc(
@@ -349,7 +393,7 @@ export class Play {
           (this.startY + coords.y) / 2,
           radius,
           0,
-          2 * Math.PI
+          2 * Math.PI,
         );
         this.ctx.strokeStyle = "#fff";
         this.ctx.stroke();
@@ -410,6 +454,7 @@ export class Play {
       //broadcast drawing to the room
       this.allShapes.push(currDraw);
 
+      // console.log(this.allShapes);
       const stringiDraw = JSON.stringify(currDraw);
       if (this.selectedTool === "square") {
         this.socket.send(
@@ -418,7 +463,7 @@ export class Play {
             roomId: this.roomId,
             message: stringiDraw,
             userId: this.userId,
-          })
+          }),
         );
       } else if (this.selectedTool === "circle") {
         this.socket.send(
@@ -427,7 +472,7 @@ export class Play {
             roomId: this.roomId,
             message: stringiDraw,
             userId: this.userId,
-          })
+          }),
         );
       } else if (this.selectedTool === "pencil" || "line") {
         this.socket.send(
@@ -436,10 +481,46 @@ export class Play {
             roomId: this.roomId,
             message: stringiDraw,
             userId: this.userId,
-          })
+          }),
         );
       }
       this.clicked = false;
+    }
+  };
+
+  mouseDblClickHandler = (e: MouseEvent) => {
+    this.clearCanvas();
+    const coords = this.toModelCoords(e.clientX, e.clientY);
+    this.textX = coords.x;
+    this.textY = coords.y;
+    this.dblClicked = true;
+  };
+
+  keyDownHandler = (e: KeyboardEvent) => {
+    // console.log(
+    //   "key",
+    //   e.key,
+    //   "and event is ",
+    //   e,
+    //   "start ",
+    //   this.startX,
+    //   this.startY,
+    // );
+    if (this.dblClicked) {
+      if (this.selectedTool === "text") {
+        this.clearCanvas();
+        if (
+          e.code.toLowerCase().includes("key") ||
+          e.code.toLowerCase() === "space"
+        ) {
+          this.text += e.key;
+        } else if (e.code.toLowerCase() === "backspace") {
+          this.text = this.text.substring(0, this.text.length - 1);
+        }
+        this.ctx.font = "18px Arial";
+        this.ctx.fillStyle = "white";
+        this.ctx.fillText(this.text, this.startX, this.startY);
+      }
     }
   };
 
@@ -469,8 +550,8 @@ export class Play {
           y1,
           x2,
           y2,
-          shape
-        )
+          shape,
+        ),
       );
     }
 
@@ -511,7 +592,7 @@ export class Play {
             p1?.y,
             p2?.x,
             p2?.y,
-            shape
+            shape,
           )
         ) {
           const msg = JSON.stringify({
@@ -527,33 +608,32 @@ export class Play {
 
     if (shape.type === "line") {
       // consider two point as one line
-      //check that erase intersect that line or not       
-        if (
-          this.circleLineIntersect(
-            eraser.x,
-            eraser.y,
-            eraser.radius,
-            shape.startX,
-            shape.startY,
-            shape.endX,
-            shape.endY,
-            shape
-          )
-        ) {
-          const msg = JSON.stringify({
-            type: "erase",
-            message: JSON.stringify(shape),
-            roomId: this.roomId,
-          });
-          this.socket.send(msg);
-          return true;
-        }
-      
+      //check that erase intersect that line or not
+      if (
+        this.circleLineIntersect(
+          eraser.x,
+          eraser.y,
+          eraser.radius,
+          shape.startX,
+          shape.startY,
+          shape.endX,
+          shape.endY,
+          shape,
+        )
+      ) {
+        const msg = JSON.stringify({
+          type: "erase",
+          message: JSON.stringify(shape),
+          roomId: this.roomId,
+        });
+        this.socket.send(msg);
+        return true;
+      }
     }
 
     return false;
   }
-    circleLineIntersect(
+  circleLineIntersect(
     cx: number,
     cy: number,
     r: number,
@@ -561,14 +641,14 @@ export class Play {
     y1: number,
     x2: number,
     y2: number,
-    shape: Shape
+    shape: Shape,
   ): boolean {
     const dx = x2 - x1;
     const dy = y2 - y1;
     const lenSq = dx * dx + dy * dy;
     const t = Math.max(
       0,
-      Math.min(1, ((cx - x1) * dx + (cy - y1) * dy) / lenSq)
+      Math.min(1, ((cx - x1) * dx + (cy - y1) * dy) / lenSq),
     );
 
     const closestX = x1 + t * dx;

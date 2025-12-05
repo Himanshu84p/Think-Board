@@ -2,6 +2,7 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 import { Play } from "@/draw/Play";
 import {
   ArrowLeftFromLine,
+  CaseSensitive,
   Circle,
   Eraser,
   Hand,
@@ -15,7 +16,14 @@ import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 
-export type Tool = "square" | "circle" | "pencil" | "drag" | "eraser" | "line";
+export type Tool =
+  | "square"
+  | "circle"
+  | "pencil"
+  | "drag"
+  | "eraser"
+  | "line"
+  | "text";
 
 export function Canvas({
   roomId,
@@ -75,6 +83,12 @@ export function Canvas({
       tool: "line",
       cursorStyle: "cursor-crosshair",
     },
+    {
+      name: "Text",
+      icon: <CaseSensitive className="w-4 h-4" />,
+      tool: "text",
+      cursorStyle: "cursor-text",
+    },
   ];
 
   useEffect(() => {
@@ -100,10 +114,10 @@ export function Canvas({
     if (canvasRef.current) {
       if (zoomValue < 2) {
         play?.zoom(
-          parseFloat(zoomValue.toFixed(3)) + parseFloat((0.1).toFixed(3))
+          parseFloat(zoomValue.toFixed(3)) + parseFloat((0.1).toFixed(3)),
         );
         setZoomValue(
-          (z) => parseFloat(z.toFixed(3)) + parseFloat((0.1).toFixed(3))
+          (z) => parseFloat(z.toFixed(3)) + parseFloat((0.1).toFixed(3)),
         );
         console.log("zooming innnn...", zoomValue);
       }
@@ -114,10 +128,10 @@ export function Canvas({
     if (canvasRef.current) {
       if (zoomValue > 0.2) {
         play?.zoom(
-          parseFloat(zoomValue.toFixed(3)) - parseFloat((0.1).toFixed(3))
+          parseFloat(zoomValue.toFixed(3)) - parseFloat((0.1).toFixed(3)),
         );
         setZoomValue(
-          (z) => parseFloat(z.toFixed(3)) - parseFloat((0.1).toFixed(3))
+          (z) => parseFloat(z.toFixed(3)) - parseFloat((0.1).toFixed(3)),
         );
         console.log("zooming innnn...", zoomValue);
       }
@@ -130,6 +144,7 @@ export function Canvas({
         height={window.innerHeight}
         ref={canvasRef}
         className={`overflow-hidden ${cursorStyle}`}
+        tabIndex={1}
       />
       {/* Updated Toolbar */}
       <motion.div
@@ -146,7 +161,7 @@ export function Canvas({
                 "relative h-9 px-2.5 rounded-md transition-all duration-200",
                 "hover:bg-foreground/50",
                 selectedTool === tool.tool &&
-                  "bg-primary/20 text-primary hover:bg-primary/20"
+                  "bg-primary/20 text-primary hover:bg-primary/20",
               )}
               onClick={() => {
                 setSelectedTool(tool.tool);
